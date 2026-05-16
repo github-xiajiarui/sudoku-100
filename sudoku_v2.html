@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>数独 - 100关</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;color:#eee;font-family:-apple-system,sans-serif;display:flex;justify-content:center;min-height:100vh}
+#app{width:100%;max-width:420px;padding:10px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:22px;margin:10px 0 8px;color:#e94560;letter-spacing:2px}
+#info{width:100%;display:flex;justify-content:space-between;align-items:center;padding:6px 4px;font-size:14px;margin-bottom:6px}
+#levelInfo{color:#ccc}
+#difficultySelect{border:1px solid #555;border-radius:6px;padding:4px 8px;font-size:14px;background:#16213e;color:#eee}
+#gameContainer{width:100%;aspect-ratio:1;background:#0f3460;border-radius:8px;padding:4px;position:relative}
+#grid{display:grid;grid-template-columns:repeat(9,1fr);gap:1px;width:100%;height:100%;background:#1a1a2e;border:2px solid #e94560;border-radius:4px}
+.cell{background:#16213e;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,5vw,28px);color:#fff;cursor:pointer;position:relative;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.cell.given{color:#e94560;font-weight:bold}
+.cell.filled{color:#4fc3f7}
+.cell.selected{background:#0d47a1 !important}
+.cell.sameNum{background:#1a237e}
+.cell.error{background:#4a0000;color:#ff5252}
+.cell.completed{background:#1b5e20 !important;color:#69f0ae}
+.cell .notes{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:90%;height:90%;position:absolute;top:5%;left:5%}
+.cell .notes span{font-size:clamp(6px,1.5vw,9px);color:#90caf9;display:flex;align-items:center;justify-content:center}
+.cell.note-mode{border-color:#e94560}
+#controls{width:100%;margin-top:8px}
+#numpad{display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin-bottom:6px}
+.numpad-btn{background:#16213e;border:1px solid #333;border-radius:6px;color:#eee;font-size:clamp(16px,5vw,26px);padding:8px 0;cursor:pointer;touch-action:manipulation}
+.numpad-btn:active{background:#0d47a1}
+.numpad-btn.erase{background:#4a0000;color:#ff5252;border-color:#e94560}
+#actionRow{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px}
+.action-btn{background:#16213e;border:1px solid #333;border-radius:6px;color:#aaa;font-size:clamp(11px,3vw,14px);padding:8px 0;cursor:pointer;touch-action:manipulation}
+.action-btn:active{background:#0d47a1}
+.action-btn.active{background:#e94560;color:#fff;border-color:#e94560}
+#timer{color:#888;font-size:13px}
+#message{text-align:center;font-size:15px;color:#69f0ae;margin-top:6px;min-height:22px}
+.border-right-3{border-right:2px solid #e94560}
+.border-bottom-3{border-bottom:2px solid #e94560}
+.border-top-3{border-top:2px solid #e94560}
+.border-left-3{border-left:2px solid #e94560}
+</style>
+</head>
+<body>
+<div id="app">
+<h1>🧩 数独 · 100关</h1>
+<div id="info">
+  <div id="levelInfo">第 <span id="levelNum">1</span>/100 关 · <span id="diffLabel">初级</span></div>
+  <select id="difficultySelect"><option value="0">初级 L1-20</option><option value="20">中级 L21-40</option><option value="40">高级 L41-60</option><option value="60">专家 L61-80</option><option value="80">大师 L81-100</option></select>
+</div>
+<div id="gameContainer"><div id="grid"></div></div>
+<div id="controls">
+  <div id="numpad"></div>
+  <div id="actionRow">
+    <button class="action-btn" id="btnPrev">◀ 上一关</button>
+    <button class="action-btn" id="btnNext">下一关 ▶</button>
+    <button class="action-btn" id="btnNote">✏️笔记</button>
+    <button class="action-btn" id="btnReset">🔄重置</button>
+  </div>
+  <div id="timer">⏱ 00:00</div>
+  <div id="message"></div>
+</div>
+</div>
+<script>
+// ========== 100关数据 ==========
+const ALL_LEVELS = __LEVEL_DATA__;
+
+// ========== 游戏状态 ==========
+let currentLevel = 0;
+let board = [];
+let given = [];
+let notes = [];
+let selectedRow = -1, selectedCol = -1;
+let noteMode = false;
+let timerSeconds = 0;
+let timerInterval = null;
+let completedLevels = new Set();
+
+// ========== DOM引用 ==========
+const grid = document.getElementById('grid');
+const numpad = document.getElementById('numpad');
+const levelNum = document.getElementById('levelNum');
+const diffLabel = document.getElementById('diffLabel');
+const message = document.getElementById('message');
+const timerEl = document.getElementById('timer');
+
+const DIFF_NAMES = ['初级','中级','高级','专家','大师'];
+const DIFF_STARTS = [0,20,40,60,80];
+
+function getDifficulty(index){
+  for(let i=DIFF_STARTS.length-1;i>=0;i--)if(index>=DIFF_STARTS[i])return i;
+  return 0;
+}
+
+// ========== 初始化 ==========
+function loadLevel(idx){
+  if(idx<0||idx>=ALL_LEVELS.length)return;
+  currentLevel = idx;
+  const data = ALL_LEVELS[idx];
+  given = data.p.map(r=>[...r]);
+  board = data.p.map(r=>[...r]);
+  notes = board.map(r=>r.map(()=>new Set()));
+  selectedRow = selectedCol = -1;
+  noteMode = false;
+  document.getElementById('btnNote').classList.remove('active');
+  
+  levelNum.textContent = idx+1;
+  const d = getDifficulty(idx);
+  diffLabel.textContent = DIFF_NAMES[d];
+  
+  render();
+  renderNumpad();
+  startTimer();
+  message.textContent = '';
+  document.getElementById('difficultySelect').value = DIFF_STARTS[d];
+}
+
+function render(){
+  grid.innerHTML = '';
+  for(let r=0;r<9;r++){
+    for(let c=0;c<9;c++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      
+      // 3x3宫格边框
+      if(c%3===2&&c!==8)cell.style.borderRight='2px solid #e94560';
+      if(r%3===2&&r!==8)cell.style.borderBottom='2px solid #e94560';
+      if(c%3===0)cell.style.borderLeft='2px solid #e94560';
+      if(r%3===0)cell.style.borderTop='2px solid #e94560';
+      
+      const val = board[r][c];
+      if(val!==0){
+        cell.textContent = val;
+        if(given[r][c]!==0)cell.classList.add('given');
+        else cell.classList.add('filled');
+      }
+      
+      // 笔记
+      if(val===0&&notes[r][c].size>0){
+        const notesDiv = document.createElement('div');
+        notesDiv.className = 'notes';
+        for(let n=1;n<=9;n++){
+          const sp = document.createElement('span');
+          sp.textContent = notes[r][c].has(n)?n:'';
+          notesDiv.appendChild(sp);
+        }
+        cell.appendChild(notesDiv);
+      }
+      
+      // 高亮选中
+      if(selectedRow>=0&&selectedCol>=0){
+        if(r===selectedRow&&c===selectedCol)cell.classList.add('selected');
+        else if(r===selectedRow||c===selectedCol)cell.style.background='#0d2137';
+        else if(Math.floor(r/3)===Math.floor(selectedRow/3)&&Math.floor(c/3)===Math.floor(selectedCol/3))cell.style.background='#0d2137';
+        // 高亮相同数字
+        const sv = board[selectedRow][selectedCol];
+        if(sv!==0&&board[r][c]===sv&&!(r===selectedRow&&c===selectedCol))cell.classList.add('sameNum');
+      }
+      
+      // 错误高亮
+      if(given[r][c]===0&&val!==0){
+        // 检查冲突
+        if(!isValid(r,c,val))cell.classList.add('error');
+      }
+      
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      cell.addEventListener('click',()=>selectCell(r,c));
+      cell.addEventListener('touchend',(e)=>{e.preventDefault();selectCell(r,c)});
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function renderNumpad(){
+  numpad.innerHTML = '';
+  for(let n=1;n<=9;n++){
+    const btn = document.createElement('button');
+    btn.className = 'numpad-btn';
+    btn.textContent = n;
+    btn.addEventListener('click',()=>inputNumber(n));
+    btn.addEventListener('touchend',(e)=>{e.preventDefault();inputNumber(n)});
+    numpad.appendChild(btn);
+  }
+  const erase = document.createElement('button');
+  erase.className = 'numpad-btn erase';
+  erase.textContent = '✕';
+  erase.addEventListener('click',()=>inputNumber(0));
+  erase.addEventListener('touchend',(e)=>{e.preventDefault();inputNumber(0)});
+  numpad.appendChild(erase);
+}
+
+function selectCell(r,c){
+  selectedRow = r;
+  selectedCol = c;
+  render();
+  renderNumpad();
+  // 自动滚动确保可见
+  const cells = grid.children;
+  const idx = r*9+c;
+  if(cells[idx])cells[idx].scrollIntoView({block:'nearest',inline:'nearest'});
+}
+
+function inputNumber(n){
+  if(selectedRow<0||selectedCol<0)return;
+  const r = selectedRow, c = selectedCol;
+  if(given[r][c]!==0)return;
+  
+  if(noteMode){
+    if(n===0){
+      notes[r][c].clear();
+    }else if(notes[r][c].has(n)){
+      notes[r][c].delete(n);
+    }else{
+      notes[r][c].add(n);
+    }
+    board[r][c] = 0;
+  }else{
+    notes[r][c].clear();
+    board[r][c] = n;
+  }
+  render();
+  renderNumpad();
+  
+  // 检查完成
+  if(checkComplete()){
+    if(!completedLevels.has(currentLevel)){
+      completedLevels.add(currentLevel);
+    }
+    message.textContent = '🎉 完成！太棒了！';
+    // 3秒后提示下一关
+    setTimeout(()=>{
+      if(currentLevel<ALL_LEVELS.length-1){
+        message.textContent = '👉 自动进入下一关...';
+        setTimeout(()=>loadLevel(currentLevel+1),1500);
+      }else{
+        message.textContent = '🏆 恭喜通关所有100关！';
+      }
+    },1000);
+  }
+}
+
+function isValid(r,c,val){
+  if(val===0)return true;
+  // 行
+  for(let i=0;i<9;i++)if(i!==c&&board[r][i]===val)return false;
+  // 列
+  for(let i=0;i<9;i++)if(i!==r&&board[i][c]===val)return false;
+  // 3x3
+  const br = Math.floor(r/3)*3, bc = Math.floor(c/3)*3;
+  for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)
+    if(!(i===r&&j===c)&&board[i][j]===val)return false;
+  return true;
+}
+
+function checkComplete(){
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(board[r][c]===0)return false;
+  // 再校验所有值合法
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(!isValid(r,c,board[r][c]))return false;
+  return true;
+}
+
+// ========== 计时器 ==========
+function startTimer(){
+  if(timerInterval)clearInterval(timerInterval);
+  timerSeconds = 0;
+  timerEl.textContent = '⏱ 00:00';
+  timerInterval = setInterval(()=>{
+    timerSeconds++;
+    const m = String(Math.floor(timerSeconds/60)).padStart(2,'0');
+    const s = String(timerSeconds%60).padStart(2,'0');
+    timerEl.textContent = `⏱ ${m}:${s}`;
+  },1000);
+}
+
+// ========== 按钮事件 ==========
+document.getElementById('btnPrev').addEventListener('click',()=>{
+  if(currentLevel>0)loadLevel(currentLevel-1);
+});
+document.getElementById('btnNext').addEventListener('click',()=>{
+  if(currentLevel<ALL_LEVELS.length-1)loadLevel(currentLevel+1);
+});
+document.getElementById('btnNote').addEventListener('click',()=>{
+  noteMode = !noteMode;
+  document.getElementById('btnNote').classList.toggle('active');
+});
+document.getElementById('btnReset').addEventListener('click',()=>{
+  if(confirm('确认重置当前关卡？')){
+    const data = ALL_LEVELS[currentLevel];
+    board = data.p.map(r=>[...r]);
+    notes = board.map(r=>r.map(()=>new Set()));
+    render();
+    renderNumpad();
+    message.textContent = '';
+    startTimer();
+  }
+});
+document.getElementById('difficultySelect').addEventListener('change',function(){
+  const start = parseInt(this.value);
+  loadLevel(start);
+});
+
+// ========== 键盘支持 ==========
+document.addEventListener('keydown',e=>{
+  if(e.key>='1'&&e.key<='9')inputNumber(parseInt(e.key));
+  if(e.key==='Backspace'||e.key==='Delete'||e.key==='0')inputNumber(0);
+  if(e.key==='ArrowUp'&&selectedRow>0)selectCell(selectedRow-1,selectedCol);
+  if(e.key==='ArrowDown'&&selectedRow<8)selectCell(selectedRow+1,selectedCol);
+  if(e.key==='ArrowLeft'&&selectedCol>0)selectCell(selectedRow,selectedCol-1);
+  if(e.key==='ArrowRight'&&selectedCol<8)selectCell(selectedRow,selectedCol+1);
+  if(e.key==='n'||e.key==='N'){noteMode=!noteMode;document.getElementById('btnNote').classList.toggle('active')}
+});
+
+// ========== 启动 ==========
+loadLevel(0);
+</script>
+</body>
+</html>

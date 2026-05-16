@@ -22,11 +22,12 @@ h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
 #tbl td.hl{background:#fdf0f4}
 #tbl td.sm{background:#fce4ec}
 #tbl td.er .c{color:#cc3355;font-weight:700;font-size:clamp(22px,7vw,36px)}
-#tbl td.br3{border-right:2px solid #f0c0d0}
-#tbl td.bb3{border-bottom:2px solid #f0c0d0}
 /* 宫内虚线格 */
 #tbl td.dr{border-right:1px dashed #d4b8c8}
 #tbl td.db{border-bottom:1px dashed #d4b8c8}
+/* 宫边界实线 - 需在虚线之后定义以覆盖 */
+#tbl td.br3{border-right:2px solid #f0c0d0}
+#tbl td.bb3{border-bottom:2px solid #f0c0d0}
 /* 从天而降动画 - 仅初次加载时触发 */
 .gv .c{animation:dropIn 0.5s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes dropIn{0%{transform:translateY(-80px);opacity:0}100%{transform:translateY(0);opacity:1}}
@@ -54,7 +55,7 @@ h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
 <body>
 <div id="app">
 <h1>🧩 数独 · 100关</h1>
-<div id="bar"><span>第 <b id="lv">1</b>/100 · <span id="dn">初级</span></span><span id="tm">⏱ 00:00</span></div>
+<div id="bar"><span>第 <b id="lv">1</b>/100 · <span id="dn">初级</span></span><span><span id="ver" style="font-size:11px;color:#c8a0b8;margin-right:6px">v0.3</span><span id="tm">⏱ 00:00</span></span></div>
 <table id="tbl"></table>
 <div id="msg"></div>
 <div id="npd"></div>
@@ -95,10 +96,12 @@ function dr(anim){
       var td=document.createElement('td');
       var v=b[r][c];
       // 宫边界: 实线, 宫内: 虚线
-      if(c%3==2&&c<8)td.className='br3';
-      else if(c%3!=0)td.className='dr';
+      // 除最后一列和宫边界列外，所有右边框都是虚线
+      td.className='';
+      if(c%3!=2&&c<8)td.className+=' dr';
+      if(r%3!=2&&r<8)td.className+=' db';
+      if(c%3==2&&c<8)td.className+=' br3';
       if(r%3==2&&r<8)td.className+=' bb3';
-      else if(r%3!=0)td.className+=' db';
       if(v){var sp=document.createElement('div');sp.className='c';sp.textContent=v;td.appendChild(sp);if(g[r][c]){td.className+=' gv';sp.style.animationDelay=(r*9+c)*20+'ms'}else td.className+=' fl'}
       // 提示标记（橙色）- 所有历史提示格子都保持橙色
       var hintKey=r+','+c;

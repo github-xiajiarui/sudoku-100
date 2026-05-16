@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>数独 · 100关</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;color:#eee;font-family:-apple-system,sans-serif;display:flex;justify-content:center;min-height:100dvh}
+#app{width:100%;max-width:440px;padding:6px 8px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:17px;padding:4px 0;color:#e94560}
+#bar{width:100%;display:flex;justify-content:space-between;padding:2px;font-size:13px;color:#aaa}
+#tbl{width:100%;border-collapse:collapse;table-layout:fixed;background:#0f3460;border:2px solid #e94560;border-radius:6px;overflow:hidden}
+#tbl td{width:11.111%;height:0;padding:0;text-align:center;vertical-align:middle;background:#16213e;font-size:clamp(18px,5.5vw,30px);color:#ddd;cursor:pointer;position:relative;user-select:none;-webkit-tap-highlight-color:transparent}
+#tbl td:after{content:'';display:block;padding-bottom:100%}
+#tbl td .c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(18px,5.5vw,30px)}
+#tbl td.gv .c{color:#ff6b6b;font-weight:700}
+#tbl td.fl .c{color:#4fc3f7}
+#tbl td.sl{background:#0d47a1!important}
+#tbl td.hl{background:#0d2137}
+#tbl td.sm{background:#1a237e}
+#tbl td.er{background:#3d0000!important}
+#tbl td.er .c{color:#ff5252}
+#tbl td.br3{border-right:2px solid #e94560}
+#tbl td.bb3{border-bottom:2px solid #e94560}
+.nt{position:absolute;inset:1px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center}
+.nt s{font-size:clamp(7px,1.8vw,10px);color:#90caf9;line-height:1}
+#npd{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin:4px 0 2px}
+.nb{background:#16213e;border:1px solid #333;border-radius:6px;color:#eee;font-size:clamp(20px,5.5vw,30px);padding:7px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nb:active{background:#0d47a1;transform:scale(0.95)}
+.nb.x{background:#3d0000;color:#ff5252;border-color:#e94560}
+#act{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:3px}
+.bt{background:#16213e;border:1px solid #555;border-radius:5px;color:#aaa;font-size:clamp(12px,3vw,14px);padding:7px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center}
+.bt:active{background:#0d47a1}
+.bt.on{background:#e94560;color:#fff;border-color:#e94560}
+#sel{width:100%;margin:3px 0}
+#sel select{width:100%;background:#16213e;color:#eee;border:1px solid #555;border-radius:5px;padding:5px;font-size:13px}
+#msg{min-height:18px;font-size:13px;color:#69f0ae;text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+<h1>🧩 数独 · 100关</h1>
+<div id="bar"><span>第 <b id="lv">1</b>/100 · <span id="dn">初级</span></span><span id="tm">⏱ 00:00</span></div>
+<table id="tbl"></table>
+<div id="npd"></div>
+<div id="act">
+  <button class="bt" id="bP">◀ 上一关</button>
+  <button class="bt" id="bN">✏️笔记</button>
+  <button class="bt" id="bR">🔄重置</button>
+  <button class="bt" id="bX">下一关 ▶</button>
+</div>
+<div id="sel"><select id="diffS"><option>初级 L1-20</option><option>中级 L21-40</option><option>高级 L41-60</option><option>专家 L61-80</option><option>大师 L81-100</option></select></div>
+<div id="msg"></div>
+</div>
+<script>
+const L = __LEVELS_DATA__;
+let idx=0,bd=[],gv=[],nts=[],sr=-1,sc=-1,nm=false,sec=0,ti=0;
+
+function ld(x){
+  if(x<0||x>99)return;
+  idx=x;const d=L[x];
+  gv=d.p.map(r=>[...r]);bd=d.p.map(r=>[...r]);
+  nts=bd.map(r=>r.map(()=>new Set()));
+  sr=sc=-1;nm=false;
+  document.getElementById('bN').classList.remove('on');
+  document.getElementById('lv').textContent=x+1;
+  document.getElementById('dn').textContent=['初级','中级','高级','专家','大师'][x/20|0];
+  dr();dn();st();document.getElementById('msg').textContent='';
+}
+
+function dr(){
+  const tbl=document.getElementById('tbl');tbl.innerHTML='';
+  for(let r=0;r<9;r++){
+    const tr=document.createElement('tr');
+    for(let c=0;c<9;c++){
+      const td=document.createElement('td');
+      const v=bd[r][c];
+      if(c%3==2&&c<8)td.className='br3';
+      if(r%3==2&&r<8)td.className+=' bb3';
+      if(v){const sp=document.createElement('div');sp.className='c';sp.textContent=v;td.appendChild(sp);if(gv[r][c])td.classList.add('gv');else td.classList.add('fl')}
+      if(!v&&nts[r][c].size>0){
+        const nd=document.createElement('div');nd.className='nt';
+        for(let x=1;x<=9;x++){const s=document.createElement('s');s.textContent=nts[r][c].has(x)?x:'';nd.appendChild(s)}
+        const sp=document.createElement('div');sp.className='c';sp.appendChild(nd);td.appendChild(sp)
+      }
+      if(sr>=0){
+        if(r===sr&&c===sc)td.classList.add('sl');
+        else if(r===sr||c===sc)td.classList.add('hl');
+        else if((r/3|0)===(sr/3|0)&&(c/3|0)===(sc/3|0))td.classList.add('hl');
+        const sv=bd[sr][sc];
+        if(sv&&bd[r][c]===sv&&!(r===sr&&c===sc))td.classList.add('sm')
+      }
+      if(v&&!gv[r][c]&&!vl(r,c,v))td.classList.add('er');
+      td.onclick=()=>sl(r,c);tr.appendChild(td)
+    }
+    tbl.appendChild(tr)
+  }
+}
+
+function dn(){
+  const npd=document.getElementById('npd');npd.innerHTML='';
+  for(let x=1;x<=9;x++){const b=document.createElement('button');b.className='nb';b.textContent=x;b.onclick=()=>ip(x);npd.appendChild(b)}
+  const e=document.createElement('button');e.className='nb x';e.textContent='✕';e.onclick=()=>ip(0);npd.appendChild(e)
+}
+
+function sl(r,c){sr=r;sc=c;dr()}
+
+function ip(v){
+  if(sr<0)return;const r=sr,c=sc;
+  if(gv[r][c])return;
+  if(nm){if(!v)nts[r][c].clear();else if(nts[r][c].has(v))nts[r][c].delete(v);else nts[r][c].add(v);bd[r][c]=0}
+  else{nts[r][c].clear();bd[r][c]=v}
+  dr()
+}
+
+function vl(r,c,v){
+  for(let i=0;i<9;i++)if(i!==c&&bd[r][i]===v)return 0;
+  for(let i=0;i<9;i++)if(i!==r&&bd[i][c]===v)return 0;
+  const br=(r/3|0)*3,bc=(c/3|0)*3;
+  for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(!(i===r&&j===c)&&bd[i][j]===v)return 0;
+  return 1
+}
+
+function fn(){
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(!bd[r][c])return 0;
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(!vl(r,c,bd[r][c]))return 0;
+  return 1
+}
+
+function st(){
+  if(ti)clearInterval(ti);sec=0;
+  document.getElementById('tm').textContent='⏱ 00:00';
+  ti=setInterval(()=>{sec++;document.getElementById('tm').textContent='⏱ '+(String(sec/60|0).padStart(2,'0'))+':'+(String(sec%60).padStart(2,'0'))},1000)
+}
+
+document.getElementById('bP').onclick=()=>{if(idx>0)ld(idx-1)};
+document.getElementById('bX').onclick=()=>{if(idx<99)ld(idx+1)};
+document.getElementById('bN').onclick=()=>{nm=!nm;document.getElementById('bN').classList.toggle('on')};
+document.getElementById('bR').onclick=()=>ld(idx);
+document.getElementById('diffS').onchange=function(){ld(this.selectedIndex*20)};
+
+document.addEventListener('keydown',e=>{
+  if(e.key>='1'&&e.key<='9')ip(+e.key);
+  if(e.key==='Backspace'||e.key==='Delete'||e.key==='0')ip(0);
+  if(e.key==='ArrowUp'&&sr>0)sl(sr-1,sc);
+  if(e.key==='ArrowDown'&&sr<8)sl(sr+1,sc);
+  if(e.key==='ArrowLeft'&&sc>0)sl(sr,sc-1);
+  if(e.key==='ArrowRight'&&sc<8)sl(sr,sc+1);
+  if(e.key==='n'||e.key==='N'){nm=!nm;document.getElementById('bN').classList.toggle('on')}
+});
+ld(0);
+</script>
+</body>
+</html>

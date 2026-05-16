@@ -147,7 +147,7 @@ function dn(){
   var e=document.createElement('button');e.className='nb x';e.textContent='✕';e.onclick=function(){ip(0)};npd.appendChild(e)
 }
 
-function sl(r,c){sr=r;sc=c;dr()}
+function sl(r,c){sr=r;sc=c;dr();dn()}
 
 function ip(v){
   if(sr<0)return;var r=sr,c=sc;
@@ -157,7 +157,7 @@ function ip(v){
   if(hintSet[hintKey])delete hintSet[hintKey];
   if(nm){if(!v)n[r][c].clear();else if(n[r][c].has(v))n[r][c].delete(v);else n[r][c].add(v);b[r][c]=0}
   else{n[r][c].clear();b[r][c]=v}
-  dr();document.getElementById('hd').style.display='none';
+  dr();dn();document.getElementById('hd').style.display='none';
   if(fn()){document.getElementById('msg').textContent='🎉 完成！';setTimeout(function(){if(i<99){document.getElementById('msg').textContent='→ 下一关';setTimeout(function(){ld(i+1)},1000)}},800)}
 }
 
@@ -318,7 +318,7 @@ function dh(){
   document.getElementById('msg').textContent='💡 格子 ('+(h.r+1)+','+(h.c+1)+') = '+h.v;
   
   sr=-1;sc=-1;
-  setTimeout(function(){sr=h.r;sc=h.c;dr()},200);
+  setTimeout(function(){sr=h.r;sc=h.c;dr();dn()},200);
   
   if(fn()){document.getElementById('msg').textContent='🎉 完成！';setTimeout(function(){if(i<99){document.getElementById('msg').textContent='→ 下一关';setTimeout(function(){ld(i+1)},1000)}},800)}
 }

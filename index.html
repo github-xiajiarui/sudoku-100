@@ -239,18 +239,38 @@ function dh(){
   sr=h.r;sc=h.c;
   dr();
   
-  // 构建详细推导过程
+  // 构建推导过程 - 三行结构
   var d=document.getElementById('hd');d.style.display='block';
   var ruleName='';
-  if(h.rt==='naked_single')ruleName='唯一候选数法';
-  else if(h.rt==='hidden_row')ruleName='隐性唯一（行排除法）';
-  else if(h.rt==='hidden_col')ruleName='隐性唯一（列排除法）';
-  else if(h.rt==='hidden_box')ruleName='隐性唯一（宫排除法）';
+  if(h.rt==='naked_single')ruleName='唯一候选数';
+  else if(h.rt==='hidden_row')ruleName='行隐性唯一';
+  else if(h.rt==='hidden_col')ruleName='列隐性唯一';
+  else if(h.rt==='hidden_box')ruleName='宫隐性唯一';
+  
+  // 提取关键推理信息
+  var brief = h.reason;
+  // naked_single: "格子 (3,7) 的候选数中，只有 5 是可能的..."
+  if(h.rt==='naked_single') {
+    brief = '该格子所在行、列、宫已有数字排除了其他可能';
+  }
+  // hidden_xxx: "在第 3 行中，数字 5 的候选位置只剩下 (3,7) 这一个格子"
+  if(h.rt==='hidden_row') {
+    var parts = h.reason.match(/\d+/g);
+    if(parts) brief = '第'+parts[0]+'行其他9个位置已被排除，'+h.v+'只能在此';
+  }
+  if(h.rt==='hidden_col') {
+    var parts = h.reason.match(/\d+/g);
+    if(parts) brief = '第'+parts[0]+'列其他9个位置已被排除，'+h.v+'只能在此';
+  }
+  if(h.rt==='hidden_box') {
+    var parts = h.reason.match(/\d+/g);
+    if(parts) brief = '第'+parts[0]+'宫其他8个位置已被排除，'+h.v+'只能在此';
+  }
   
   d.innerHTML=
-    '<div class="step">推理规则：'+ruleName+'</div>'+
-    '<br>📍 <b>'+(h.r+1)+'行'+(h.c+1)+'列 → '+h.v+'</b><br><br>'+
-    '🔍 推理过程：<br>'+h.reason;
+    '<b>'+(h.r+1)+'行'+(h.c+1)+'列 填 '+h.v+'</b><br>'+
+    '<span style="color:#888;font-size:12px">规则：'+ruleName+'</span><br>'+
+    '<span style="color:#b0bec5;font-size:12px">'+brief+'</span>';
   
   document.getElementById('msg').textContent='💡 格子 ('+(h.r+1)+','+(h.c+1)+') = '+h.v;
   

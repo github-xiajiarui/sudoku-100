@@ -202,8 +202,8 @@ function ip(v){
       document.getElementById('msg').textContent='';
       var t=document.getElementById('tbl');
       for(var a=0;a<9;a++)for(var y=0;y<9;y++)t.rows[a].cells[y].className+=' fu';
-      setTimeout(function(){ld(_n)},1000)
-    },800)}
+      setTimeout(function(){ld(_n)},600)
+    },200)}
   }
 }
 
@@ -368,7 +368,12 @@ function dh(){
   sr=-1;sc=-1;
   setTimeout(function(){sr=h.r;sc=h.c;dr();dn()},200);
   
-  if(fn()){document.getElementById('msg').textContent='🎉 完成！';setTimeout(function(){if(i<99){document.getElementById('msg').textContent='→ 下一关';setTimeout(function(){ld(i+1)},1000)}},800)}
+  if(fn()){document.getElementById('msg').textContent='🎉 完成！';setTimeout(function(){if(i<99){var _n=i+1;setTimeout(function(){
+    document.getElementById('msg').textContent='';
+    var t=document.getElementById('tbl');
+    for(var a=0;a<9;a++)for(var y=0;y<9;y++)t.rows[a].cells[y].className+=' fu';
+    setTimeout(function(){ld(_n)},600)
+  },200)}},800)}
 }
 
 document.getElementById('bP').onclick=function(){if(i>0)ld(i-1);document.getElementById('hd').style.display='none'};

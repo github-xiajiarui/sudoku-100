@@ -195,19 +195,19 @@ function ip(v){
   if(nm){if(!v)n[r][c].clear();else if(n[r][c].has(v))n[r][c].delete(v);else n[r][c].add(v);b[r][c]=0}
   else{n[r][c].clear();b[r][c]=v}
   dr();dn();document.getElementById('hd').style.display='none';
-  if(fn()){document.getElementById('msg').textContent='🎉 完成！';setTimeout(function(){if(i<99)win()},800)}
+  if(fn()){
+    document.getElementById('msg').textContent='🎉 完成！';
+    if(i<99){var _n=i+1;setTimeout(function(){
+      document.getElementById('msg').textContent='';
+      var t=document.getElementById('tbl');
+      for(var a=0;a<9;a++)for(var y=0;y<9;y++)t.rows[a].cells[y].className+=' fu';
+      setTimeout(function(){ld(_n)},1000)
+    },800)}
+  }
 }
 
-// 通关判定：立即触发飞走动画
-function win(){
-  document.getElementById('msg').textContent='';
-  var tbl=document.getElementById('tbl');
-  for(var r=0;r<9;r++)for(var c=0;c<9;c++){
-    var td=tbl.rows[r].cells[c];
-    td.className+=' fu'
-  }
-  if(i<99)setTimeout(function(){ld(i+1)},1000)
-}
+// 不用单独函数，直接在 ip 中内联操作
+// function win() 已废弃，逻辑内联在 ip() 中
 
 function vl(r,c,v){
   for(var k=0;k<9;k++){if(k!==c&&b[r][k]===v)return 0;if(k!==r&&b[k][c]===v)return 0}

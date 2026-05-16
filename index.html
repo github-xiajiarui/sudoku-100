@@ -49,12 +49,14 @@ h1{font-size:17px;padding:4px 0;color:#e94560}
 <table id="tbl"></table>
 <div id="msg"></div>
 <div id="npd"></div>
-<div id="act">
-  <button class="bt" id="bP">◀</button>
-  <button class="bt" id="bH">💡提示</button>
-  <button class="bt" id="bN">✏️笔记</button>
-  <button class="bt" id="bR">🔄</button>
-  <button class="bt" id="bX">▶</button>
+    <div id="act" style="grid-template-columns:1fr 1fr 1fr">
+  <button class="bt" id="bP">◀ 上一关</button>
+  <button class="bt" id="bR">🔄 重置</button>
+  <button class="bt" id="bX">下一关 ▶</button>
+</div>
+<div id="act2" style="display:grid;grid-template-columns:1fr 1fr;gap:3px;width:100%">
+  <button class="bt" id="bH">💡 提示</button>
+  <button class="bt" id="bN">✏️ 笔记</button>
 </div>
 <div id="hd"></div>
 <div id="sel"><select id="ds"><option>初级 L1-20</option><option>中级 L21-40</option><option>高级 L41-60</option><option>专家 L61-80</option><option>大师 L81-100</option></select></div>

@@ -113,7 +113,37 @@ function dr(){
 
 function dn(){
   var npd=document.getElementById('npd');npd.innerHTML='';
-  for(var x=1;x<=9;x++){(function(v){var b=document.createElement('button');b.className='nb';b.textContent=v;b.onclick=function(){ip(v)};npd.appendChild(b)})(x)}
+  for(var x=1;x<=9;x++){(function(v){
+    // 功能1: 数字已出现9次 → 禁用
+    var count=0;for(var r=0;r<9;r++)for(var c=0;c<9;c++)if(b[r][c]===v)count++;
+    var disabled=count>=9;
+    
+    // 功能2: 当前位置是行列宫最后一个空 → 只允许正确数字
+    if(sr>=0&&!disabled){
+      var r=sr,c=sc;
+      if(!g[r][c]&&b[r][c]===0){
+        // 检查是否是最后一个空
+        var emptyRow=0,emptyCol=0,emptyBox=0;
+        for(var k=0;k<9;k++){
+          if(b[r][k]==0)emptyRow++;
+          if(b[k][c]==0)emptyCol++;
+        }
+        var br=(r/3|0)*3,bc=(c/3|0)*3;
+        for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++)if(b[i][j]==0)emptyBox++;
+        
+        // 如果是行列宫的最后一个空，只有正确答案可输入
+        if(emptyRow===1||emptyCol===1||emptyBox===1){
+          // 这个位置的正确答案是L[i]的解中的数字
+          var correct=L[i].s[r][c];
+          if(v!==correct)disabled=true;
+        }
+      }
+    }
+    
+    var b=document.createElement('button');b.className='nb';b.textContent=v;
+    if(disabled){b.style.opacity='0.3';b.style.background='#0a0a1a';b.disabled=true}
+    b.onclick=function(){ip(v)};npd.appendChild(b)
+  })(x)}
   var e=document.createElement('button');e.className='nb x';e.textContent='✕';e.onclick=function(){ip(0)};npd.appendChild(e)
 }
 

@@ -195,20 +195,18 @@ function ip(v){
   if(nm){if(!v)n[r][c].clear();else if(n[r][c].has(v))n[r][c].delete(v);else n[r][c].add(v);b[r][c]=0}
   else{n[r][c].clear();b[r][c]=v}
   dr();dn();document.getElementById('hd').style.display='none';
-  if(fn()){document.getElementById('msg').textContent='🎉 完成！';setTimeout(function(){if(i<99){GO()}},800)}
+  if(fn()){document.getElementById('msg').textContent='🎉 完成！';setTimeout(function(){if(i<99)win()},800)}
 }
 
-// 过场动画：所有数字向上飞走 → 加载下一关 → 数字从天而降
-function GO(){
+// 通关判定：立即触发飞走动画
+function win(){
   document.getElementById('msg').textContent='';
   var tbl=document.getElementById('tbl');
-  // 给所有非空格子添加飞走动画class（一齐飞走，无延迟）
   for(var r=0;r<9;r++)for(var c=0;c<9;c++){
     var td=tbl.rows[r].cells[c];
-    if(b[r][c])td.className+=' fu'
+    td.className+=' fu'
   }
-  // 动画完成后加载下一关
-  setTimeout(function(){ld(i+1)},1000)
+  if(i<99)setTimeout(function(){ld(i+1)},1000)
 }
 
 function vl(r,c,v){

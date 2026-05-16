@@ -24,6 +24,11 @@ h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
 #tbl td.er .c{color:#cc3355;font-weight:700;font-size:clamp(22px,7vw,36px)}
 #tbl td.br3{border-right:2px solid #f0c0d0}
 #tbl td.bb3{border-bottom:2px solid #f0c0d0}
+/* 从天而降动画 - 仅初次加载时触发 */
+.gv .c{animation:dropIn 0.5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes dropIn{0%{transform:translateY(-80px);opacity:0}100%{transform:translateY(0);opacity:1}}
+/* 无动画版本 - 切换关卡/选格/填数时用 */
+.noanim .gv .c{animation:none!important}
 .nt{position:absolute;inset:1px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center}
 .nt span{font-size:clamp(7px,1.8vw,10px);color:#b8a0b0;line-height:1;text-decoration:none}
 #npd{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0 4px}
@@ -73,13 +78,14 @@ function ld(x){
   document.getElementById('bN').className='bt';
   document.getElementById('lv').textContent=x+1;
   document.getElementById('dn').textContent=['初级','中级','高级','专家','大师'][x/20|0];
-  dr();dn();st();document.getElementById('msg').textContent='';document.getElementById('hd').style.display='none';hintSet={};
+  dr(true);dn();st();document.getElementById('msg').textContent='';document.getElementById('hd').style.display='none';hintSet={};
   // 保存当前关卡
   try{localStorage.setItem('sudoku_level',x)}catch(e){}
 }
 
-function dr(){
+function dr(anim){
   var tbl=document.getElementById('tbl');tbl.innerHTML='';
+  if(anim)tbl.className='';else tbl.className='noanim';
   for(var r=0;r<9;r++){
     var tr=document.createElement('tr');
     for(var c=0;c<9;c++){
@@ -87,7 +93,7 @@ function dr(){
       var v=b[r][c];
       if(c%3==2&&c<8)td.className='br3';
       if(r%3==2&&r<8)td.className+=' bb3';
-      if(v){var sp=document.createElement('div');sp.className='c';sp.textContent=v;td.appendChild(sp);if(g[r][c])td.className+=' gv';else td.className+=' fl'}
+      if(v){var sp=document.createElement('div');sp.className='c';sp.textContent=v;td.appendChild(sp);if(g[r][c]){td.className+=' gv';sp.style.animationDelay=(r*9+c)*20+'ms'}else td.className+=' fl'}
       // 提示标记（橙色）- 所有历史提示格子都保持橙色
       var hintKey=r+','+c;
       if(hintSet[hintKey]&&!g[r][c])td.className+=' ht';

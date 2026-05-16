@@ -22,11 +22,12 @@ h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
 #tbl td.hl{background:#fdf0f4}
 #tbl td.sm{background:#fce4ec}
 #tbl td.er .c{color:#cc3355;font-weight:700;font-size:clamp(22px,7vw,36px)}
-#tbl td.br3{border-right:2px solid #f0c0d0}
-#tbl td.bb3{border-bottom:2px solid #f0c0d0}
 /* 宫内虚线格 */
 #tbl td.dr{border-right:1px dashed #d4b8c8}
 #tbl td.db{border-bottom:1px dashed #d4b8c8}
+/* 宫边界实线 - 需在虚线之后定义以覆盖 */
+#tbl td.br3{border-right:2px solid #f0c0d0}
+#tbl td.bb3{border-bottom:2px solid #f0c0d0}
 /* 从天而降动画 - 仅初次加载时触发 */
 .gv .c{animation:dropIn 0.5s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes dropIn{0%{transform:translateY(-80px);opacity:0}100%{transform:translateY(0);opacity:1}}

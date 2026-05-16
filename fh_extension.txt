@@ -1,0 +1,57 @@
+  // 4. 隐性唯一 - 宫
+  for(var br=0;br<9&&!h;br+=3)for(var bk=0;bk<9&&!h;bk+=3)for(var v=1;v<=9&&!h;v++){
+    var cs=[];for(var r=br;r<br+3;r++)for(var k=bk;k<bk+3;k++)if(c[r][k].has(v))cs.push([r,k]);
+    if(cs.length===1){
+      var r=cs[0][0],k=cs[0][1];
+      h={r:r,c:k,v:v,rt:'hidden_box',
+        reason:'在第 '+bn(r,k)+' 宫中，数字 '+v+' 的候选位置只剩下 ('+(r+1)+','+(k+1)+') 这一个格子（其他格子已填或已被排除），所以只能填 '+v};
+    }
+  }
+  if(h)return h;
+
+  // 5. 回溯兜底：当所有逻辑策略都卡住时，用试数法确定一个格子
+  // 找到候选数最少的格子，逐一尝试，看哪个数字能导向唯一解
+  var bestR=-1,bestC=-1,bestSize=10;
+  for(var r=0;r<9;r++)for(var k=0;k<9;k++){
+    if(b[r][k]==0&&c[r][k].size>0&&c[r][k].size<bestSize){bestR=r;bestC=k;bestSize=c[r][k].size}
+  }
+  if(bestR>=0){
+    // 对候选数最少的格子，逐一尝试
+    var candidates=Array.from(c[bestR][bestC]);
+    for(var t=0;t<candidates.length;t++){
+      var testV=candidates[t];
+      // 保存状态
+      var saveB=b.map(function(r){return r.slice()});
+      b[bestR][bestC]=testV;
+      // 尝试用回溯法求解
+      if(solveBacktrack()){
+        h={r:bestR,c:bestC,v:testV,rt:'trial',
+          reason:'经过试数推导，格子 ('+rn(bestR)+','+cn(bestC)+') 只能填 '+testV+'（其他候选数 '+candidates.filter(function(v){return v!==testV}).join('、')+' 会导致无解）'};
+        b=saveB;
+        return h;
+      }
+      b=saveB;
+    }
+  }
+  return h;
+}
+
+// 回溯求解器（用于试数兜底）
+function solveBacktrack(){
+  var g=b.map(function(r){return r.slice()});
+  function bt(){
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+      if(g[r][c]==0){
+        for(var v=1;v<=9;v++){
+          var ok=1;
+          for(var i=0;i<9&&ok;i++){if(g[r][i]==v||g[i][c]==v)ok=0}
+          if(ok){var br=(r/3|0)*3,bc=(c/3|0)*3;for(var i=br;i<br+3&&ok;i++)for(var j=bc;j<bc+3;j++)if(g[i][j]==v)ok=0}
+          if(ok){g[r][c]=v;if(bt())return 1;g[r][c]=0}
+        }
+        return 0
+      }
+    }
+    return 1
+  }
+  return bt()
+}

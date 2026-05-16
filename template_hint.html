@@ -58,7 +58,7 @@ h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
 <body>
 <div id="app">
 <h1>🧩 数独 · 100关</h1>
-<div id="bar"><span>第 <b id="lv">1</b>/100 · <span id="dn">初级</span></span><span><span id="ver" style="font-size:11px;color:#c8a0b8;margin-right:6px">v1.8</span><span id="tm">⏱ 00:00</span></span></div>
+<div id="bar"><span>第 <b id="lv">1</b>/100 · <span id="dn">初级</span></span><span><span id="ver" style="font-size:11px;color:#c8a0b8;margin-right:6px">v1.9</span><span id="tm">⏱ 00:00</span></span></div>
 <table id="tbl"></table>
 <div id="msg"></div>
 <div id="npd"></div>
@@ -292,9 +292,49 @@ function fh(){
       var r=cs[0][0],k=cs[0][1];
       h={r:r,c:k,v:v,rt:'hidden_box',
         reason:'在第 '+bn(r,k)+' 宫中，数字 '+v+' 的候选位置只剩下 ('+(r+1)+','+(k+1)+') 这一个格子（其他格子已填或已被排除），所以只能填 '+v};
+  }
+  if(h)return h;
+
+  // 5. 回溯兜底
+  var bestR=-1,bestC=-1,bestSize=10;
+  for(var r=0;r<9;r++)for(var k=0;k<9;k++){
+    if(b[r][k]==0&&c[r][k].size>0&&c[r][k].size<bestSize){bestR=r;bestC=k;bestSize=c[r][k].size}
+  }
+  if(bestR>=0){
+    var cans=Array.from(c[bestR][bestC]);
+    for(var t=0;t<cans.length;t++){
+      var tv=cans[t],sb=b.map(function(r){return r.slice()});
+      b[bestR][bestC]=tv;
+      if(sb2()){
+        var others=cans.filter(function(v){return v!==tv}).join('、');
+        b=sb;
+        h={r:bestR,c:bestC,v:tv,rt:'trial',
+          reason:'经过试数推导，格子 ('+rn(bestR)+','+cn(bestC)+') 只能填 '+tv+'（候选数 '+others+' 会导致无解）'};
+        return h;
+      }
+      b=sb;
     }
   }
   return h;
+}
+
+function sb2(){
+  var g=b.map(function(r){return r.slice()});
+  function bt(){
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+      if(g[r][c]==0){
+        for(var v=1;v<=9;v++){
+          var ok=1;
+          for(var i=0;i<9&&ok;i++){if(g[r][i]==v||g[i][c]==v)ok=0}
+          if(ok){var br=(r/3|0)*3,bc=(c/3|0)*3;for(var i=br;i<br+3&&ok;i++)for(var j=bc;j<bc+3;j++)if(g[i][j]==v)ok=0}
+          if(ok){g[r][c]=v;if(bt())return 1;g[r][c]=0}
+        }
+        return 0
+      }
+    }
+    return 1
+  }
+  return bt()
 }
 
 // 辅助：显示行中已有数字（排除用）
@@ -329,6 +369,7 @@ function dh(){
   else if(h.rt==='hidden_row')ruleName='行隐性唯一';
   else if(h.rt==='hidden_col')ruleName='列隐性唯一';
   else if(h.rt==='hidden_box')ruleName='宫隐性唯一';
+  else if(h.rt==='trial')ruleName='试数推导';
   
   // 收集行列宫已有数字
   var rNums=[],cNums=[],bNums=[];

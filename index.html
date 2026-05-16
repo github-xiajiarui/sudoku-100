@@ -14,8 +14,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0f0f1a;font-family:
 #inf .lb{opacity:.6;font-size:.65rem}
 #inf .er{color:#ff6b6b;font-size:.65rem;margin-left:6px}
 #rst{background:rgba(255,255,255,.08);border:none;color:#fff;padding:6px 14px;border-radius:8px;font-size:.75rem}
-#bd{flex:1;display:flex;justify-content:center;align-items:center;min-height:0;position:relative;max-height:100%}
-#c{display:block;width:100%;aspect-ratio:1;max-width:100%;max-height:100%;border-radius:6px;touch-action:none;cursor:pointer}
+#bd{flex:1;display:flex;justify-content:center;align-items:center;min-height:0;position:relative}
+#c{display:block;max-width:100%;max-height:100%;border-radius:6px;touch-action:none;cursor:pointer;background:#1a1a2e}
 #np{flex-shrink:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:4px 0}
 #np button{aspect-ratio:1.6;border:none;border-radius:8px;font-size:1.1rem;font-weight:700;color:#fff;background:rgba(255,255,255,.1);touch-action:manipulation}
 #np .er{background:rgba(255,107,107,.15);color:#ff6b6b}
@@ -53,9 +53,11 @@ var cur=0,bd=[],gv=[],nt=[],sel=null,err=0,nm=0,sz;
 
 function rs(){
  var r=c.getBoundingClientRect();
- sz=Math.round(r.width);
+ var size=Math.min(r.width,r.height);
+ sz=Math.round(size);
  var d=devicePixelRatio||1;
  c.width=sz*d;c.height=sz*d;x.setTransform(d,0,0,d,0,0);
+ c.style.width=sz+"px";c.style.height=sz+"px";
  dw();
 }
 rs();window.addEventListener("resize",rs);

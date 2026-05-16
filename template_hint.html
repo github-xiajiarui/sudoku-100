@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>数独 · 100关</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fef6f9;color:#5a4a5a;font-family:-apple-system,sans-serif;display:flex;justify-content:center;min-height:100dvh}
+#app{width:100%;max-width:440px;padding:8px 10px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
+#bar{width:100%;display:flex;justify-content:space-between;padding:4px 2px;font-size:13px;color:#b08ba8}
+#tbl{width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff;border:2px solid #f0c0d0;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(200,140,170,0.15)}
+#tbl td{width:11.111%;height:0;padding:0;text-align:center;vertical-align:middle;background:#fff8fa;cursor:pointer;position:relative;user-select:none}
+#tbl td:after{content:'';display:block;padding-bottom:100%}
+#tbl td .c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(18px,5.5vw,30px);color:#5a4a5a}
+#tbl td.gv .c{color:#d4728a;font-weight:700}
+#tbl td.fl .c{color:#7fb3d3}
+#tbl td.ht .c{color:#e8a040;font-weight:700}
+#tbl td.sl{background:#fce4ec!important;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.55}}
+#tbl td.hl{background:#fdf0f4}
+#tbl td.sm{background:#fce4ec}
+#tbl td.er .c{color:#cc3355;font-weight:700;font-size:clamp(22px,7vw,36px)}
+#tbl td.br3{border-right:2px solid #f0c0d0}
+#tbl td.bb3{border-bottom:2px solid #f0c0d0}
+/* 宫内虚线格 */
+#tbl td.dr{border-right:1px dashed #d4b8c8}
+#tbl td.db{border-bottom:1px dashed #d4b8c8}
+/* 从天而降动画 - 仅初次加载时触发 */
+.gv .c{animation:dropIn 0.5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes dropIn{0%{transform:translateY(-80px);opacity:0}100%{transform:translateY(0);opacity:1}}
+/* 无动画版本 - 切换关卡/选格/填数时用 */
+.noanim .gv .c{animation:none!important}
+.nt{position:absolute;inset:1px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center}
+.nt span{font-size:clamp(7px,1.8vw,10px);color:#b8a0b0;line-height:1;text-decoration:none}
+#npd{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0 4px}
+.nb{background:#ffffff;border:1.5px solid #f0d0dd;border-radius:10px;color:#5a4a5a;font-size:clamp(20px,5.5vw,30px);padding:8px 0;cursor:pointer;box-shadow:0 1px 4px rgba(200,140,170,0.1)}
+.nb:active{background:#fce4ec;transform:scale(0.95)}
+.nb.x{background:#ffe8ee;color:#e87a9d;border-color:#f0b0c8}
+#act{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.bt{background:#ffffff;border:1.5px solid #f0d0dd;border-radius:8px;color:#b08ba8;font-size:clamp(12px,3vw,14px);padding:8px 0;cursor:pointer;text-align:center;box-shadow:0 1px 4px rgba(200,140,170,0.08)}
+.bt:active{background:#fce4ec}
+.bt.on{background:#e87a9d;color:#fff;border-color:#e87a9d;box-shadow:0 2px 8px rgba(232,122,157,0.3)}
+#sel{width:100%;margin:4px 0}
+#sel select{width:100%;background:#ffffff;color:#5a4a5a;border:1.5px solid #f0d0dd;border-radius:8px;padding:6px;font-size:13px;box-shadow:0 1px 4px rgba(200,140,170,0.08)}
+#msg{min-height:24px;font-size:13px;color:#7fb3d3;text-align:center;padding:4px;line-height:1.4}
+#hd{display:none;width:100%;background:#fff8fa;border:1.5px solid #f0c0d0;border-radius:10px;padding:10px 12px;margin:6px 0;font-size:13px;color:#7a6a7a;line-height:1.6;text-align:left;box-shadow:0 1px 6px rgba(200,140,170,0.1)}
+#hd b{color:#e87a9d}
+#hd .v{color:#d4728a;font-weight:700;font-size:16px}
+#hd .step{color:#b08ba8;font-size:12px}
+</style>
+</head>
+<body>
+<div id="app">
+<h1>🧩 数独 · 100关</h1>
+<div id="bar"><span>第 <b id="lv">1</b>/100 · <span id="dn">初级</span></span><span id="tm">⏱ 00:00</span></div>
+<table id="tbl"></table>
+<div id="msg"></div>
+<div id="npd"></div>
+    <div id="act" style="grid-template-columns:1fr 1fr 1fr">
+  <button class="bt" id="bP">◀ 上一关</button>
+  <button class="bt" id="bR">🔄 重置</button>
+  <button class="bt" id="bX">下一关 ▶</button>
+</div>
+<div id="act2" style="display:grid;grid-template-columns:1fr 1fr;gap:3px;width:100%">
+  <button class="bt" id="bH">💡 提示</button>
+  <button class="bt" id="bN">✏️ 笔记</button>
+</div>
+<div id="hd"></div>
+<div id="sel"><select id="ds"><option>初级 L1-20</option><option>中级 L21-40</option><option>高级 L41-60</option><option>专家 L61-80</option><option>大师 L81-100</option></select></div>
+</div>
+<script>
+var L=__LEVELS_DATA__, i=0, b=[], g=[], n=[], sr=-1, sc=-1, nm=false, se=0, ti=0, hintSet={};
+
+function ld(x){
+  if(x<0||x>99)return;
+  i=x;var d=L[x];g=d.p.map(function(r){return r.slice()});b=d.p.map(function(r){return r.slice()});
+  n=b.map(function(r){return r.map(function(){return new Set()})});
+  sr=sc=-1;nm=false;
+  document.getElementById('bN').className='bt';
+  document.getElementById('lv').textContent=x+1;
+  document.getElementById('dn').textContent=['初级','中级','高级','专家','大师'][x/20|0];
+  dr(true);dn();st();document.getElementById('msg').textContent='';document.getElementById('hd').style.display='none';hintSet={};
+  // 保存当前关卡
+  try{localStorage.setItem('sudoku_level',x)}catch(e){}
+}
+
+function dr(anim){
+  var tbl=document.getElementById('tbl');tbl.innerHTML='';
+  if(anim)tbl.className='';else tbl.className='noanim';
+  for(var r=0;r<9;r++){
+    var tr=document.createElement('tr');
+    for(var c=0;c<9;c++){
+      var td=document.createElement('td');
+      var v=b[r][c];
+      // 宫边界: 实线, 宫内: 虚线
+      // 先加虚线(非边缘列/行)，再覆盖宫边界为实线
+      td.className='';
+      if(c%3!=0&&c!=0)td.className+=' dr';
+      if(r%3!=0&&r!=0)td.className+=' db';
+      if(c%3==2&&c<8)td.className+=' br3';
+      if(r%3==2&&r<8)td.className+=' bb3';
+      if(v){var sp=document.createElement('div');sp.className='c';sp.textContent=v;td.appendChild(sp);if(g[r][c]){td.className+=' gv';sp.style.animationDelay=(r*9+c)*20+'ms'}else td.className+=' fl'}
+      // 提示标记（橙色）- 所有历史提示格子都保持橙色
+      var hintKey=r+','+c;
+      if(hintSet[hintKey]&&!g[r][c])td.className+=' ht';
+      if(!v&&n[r][c].size>0){
+        var nd=document.createElement('div');nd.className='nt';
+        for(var x=1;x<=9;x++){var s=document.createElement('span');s.textContent=n[r][c].has(x)?x:'';nd.appendChild(s)}
+        var sp=document.createElement('div');sp.className='c';sp.appendChild(nd);td.appendChild(sp)
+      }
+      if(sr>=0){
+        if(r===sr&&c===sc)td.className+=' sl';
+        else if(r===sr||c===sc)td.className+=' hl';
+        var sv=b[sr][sc];
+        if(sv&&b[r][c]===sv&&!(r===sr&&c===sc))td.className+=' sm'
+      }
+      if(v&&!g[r][c]&&!vl(r,c,v))td.className+=' er';
+      td.onclick=function(r,c){return function(){sl(r,c)}}(r,c);
+      tr.appendChild(td)
+    }
+    tbl.appendChild(tr)
+  }
+}
+
+function dn(){
+  var npd=document.getElementById('npd');npd.innerHTML='';
+  for(var x=1;x<=9;x++){(function(v){
+    // 功能1: 数字已出现9次 → 禁用
+    var cnt=0;for(var rr=0;rr<9;rr++)for(var cc=0;cc<9;cc++)if(b[rr][cc]===v)cnt++;
+    var disabled=cnt>=9;
+    
+    // 功能2: 当前位置是行列宫最后一个空 → 只允许正确数字
+    if(sr>=0&&!disabled){
+      var r=sr,c=sc;
+      if(!g[r][c]&&b[r][c]===0){
+        // 检查是否是最后一个空
+        var emptyRow=0,emptyCol=0,emptyBox=0;
+        for(var k=0;k<9;k++){
+          if(b[r][k]==0)emptyRow++;
+          if(b[k][c]==0)emptyCol++;
+        }
+        var br=(r/3|0)*3,bc=(c/3|0)*3;
+        for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++)if(b[i][j]==0)emptyBox++;
+        
+        // 如果是行列宫的最后一个空，只有正确答案可输入
+        if(emptyRow===1||emptyCol===1||emptyBox===1){
+          // 先检查当前行列宫是否有冲突（重复数字），有冲突则不限制
+          var hasConflict=false;
+          if(emptyRow===1){
+            var seen={};for(var k=0;k<9;k++){var nv=b[r][k];if(nv&&seen[nv]){hasConflict=true;break}seen[nv]=1}
+          }
+          if(!hasConflict&&emptyCol===1){
+            var seen={};for(var k=0;k<9;k++){var nv=b[k][c];if(nv&&seen[nv]){hasConflict=true;break}seen[nv]=1}
+          }
+          if(!hasConflict&&emptyBox===1){
+            var seen={};for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++){var nv=b[i][j];if(nv&&seen[nv]){hasConflict=true;break}seen[nv]=1}
+          }
+          if(!hasConflict){
+            // 无冲突，计算实际缺失的数字
+            var correct;
+            if(emptyRow===1){
+              for(var n=1;n<=9;n++){var found=false;for(var k=0;k<9;k++)if(b[r][k]===n){found=true;break}if(!found){correct=n;break}}
+            }else if(emptyCol===1){
+              for(var n=1;n<=9;n++){var found=false;for(var k=0;k<9;k++)if(b[k][c]===n){found=true;break}if(!found){correct=n;break}}
+            }else{
+              for(var n=1;n<=9;n++){var found=false;for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++)if(b[i][j]===n){found=true;i=br+3;break}if(!found){correct=n;break}}
+            }
+            if(v!==correct)disabled=true;
+          }
+        }
+      }
+    }
+    
+    var btn=document.createElement('button');btn.className='nb';btn.textContent=v;
+    if(disabled){btn.style.opacity='0.3';btn.style.background='#0a0a1a';btn.disabled=true}
+    btn.onclick=function(){ip(v)};npd.appendChild(btn)
+  })(x)}
+  var e=document.createElement('button');e.className='nb x';e.textContent='✕';e.onclick=function(){ip(0)};npd.appendChild(e)
+}
+
+function sl(r,c){sr=r;sc=c;dr();dn()}
+
+function ip(v){
+  if(sr<0)return;var r=sr,c=sc;
+  if(g[r][c])return;
+  // 如果用户手动填入提示格子，从提示集合中移除
+  var hintKey=r+','+c;
+  if(hintSet[hintKey])delete hintSet[hintKey];
+  if(nm){if(!v)n[r][c].clear();else if(n[r][c].has(v))n[r][c].delete(v);else n[r][c].add(v);b[r][c]=0}
+  else{n[r][c].clear();b[r][c]=v}
+  dr();dn();document.getElementById('hd').style.display='none';
+  if(fn()){document.getElementById('msg').textContent='🎉 完成！';setTimeout(function(){if(i<99){document.getElementById('msg').textContent='→ 下一关';setTimeout(function(){ld(i+1)},1000)}},800)}
+}
+
+function vl(r,c,v){
+  for(var k=0;k<9;k++){if(k!==c&&b[r][k]===v)return 0;if(k!==r&&b[k][c]===v)return 0}
+  var br=(r/3|0)*3,bc=(c/3|0)*3;
+  for(var k=br;k<br+3;k++)for(var l=bc;l<bc+3;l++)if(!(k===r&&l===c)&&b[k][l]===v)return 0;
+  return 1
+}
+
+function fn(){
+  for(var r=0;r<9;r++)for(var c=0;c<9;c++)if(!b[r][c])return 0;
+  for(var r=0;r<9;r++)for(var c=0;c<9;c++)if(!vl(r,c,b[r][c]))return 0;
+  return 1
+}
+
+function st(){
+  if(ti)clearInterval(ti);se=0;
+  document.getElementById('tm').textContent='⏱ 00:00';
+  ti=setInterval(function(){se++;var m=se/60|0,s=se%60;document.getElementById('tm').textContent='⏱ '+(m<10?'0':'')+m+':'+(s<10?'0':'')+s},1000)
+}
+
+// ===== 提示逻辑 =====
+// 候选数缩写:行列宫的格子编号
+function rn(r){return r+1} // 行号1-9
+function cn(c){return c+1} // 列号1-9
+function bn(r,c){return (r/3|0)*3+(c/3|0)+1} // 宫号1-9
+
+function gc(){
+  var c=Array.from({length:9},function(){return Array.from({length:9},function(){return new Set()})});
+  for(var r=0;r<9;r++)for(var k=0;k<9;k++){
+    if(b[r][k])continue;
+    var s=new Set([1,2,3,4,5,6,7,8,9]);
+    for(var i=0;i<9;i++){if(b[r][i])s.delete(b[r][i]);if(b[i][k])s.delete(b[i][k])}
+    var br=(r/3|0)*3,bk=(k/3|0)*3;
+    for(var i=br;i<br+3;i++)for(var j=bk;j<bk+3;j++)if(b[i][j])s.delete(b[i][j]);
+    c[r][k]=s
+  }
+  return c
+}
+
+function fh(){
+  var c=gc(),h=null;
+  
+  // 1. 唯一候选数
+  for(var r=0;r<9&&!h;r++)for(var k=0;k<9&&!h;k++){
+    if(b[r][k]==0&&c[r][k].size===1){
+      var v=Array.from(c[r][k])[0];
+      h={r:r,c:k,v:v,rt:'naked_single',
+        reason:'格子 ('+rn(r)+','+cn(k)+') 的候选数中，只有 '+v+' 是可能的（该行已有'+getRowNums(r,v)+'，该列已有'+getColNums(k,v)+'，该宫已有'+getBoxNums(r,k,v)+'），所以只能填 '+v};
+    }
+  }
+  if(h)return h;
+  
+  // 2. 隐性唯一 - 行
+  for(var r=0;r<9&&!h;r++)for(var v=1;v<=9&&!h;v++){
+    var ks=[];for(var k=0;k<9;k++)if(c[r][k].has(v))ks.push(k);
+    if(ks.length===1){
+      var k=ks[0];
+      h={r:r,c:k,v:v,rt:'hidden_row',
+        reason:'在第 '+(r+1)+' 行中，数字 '+v+' 的候选位置只剩下 ('+(r+1)+','+(k+1)+') 这一个格子（其他格子已填或已被同行/同列/同宫排除），所以只能填 '+v};
+    }
+  }
+  if(h)return h;
+  
+  // 3. 隐性唯一 - 列
+  for(var k=0;k<9&&!h;k++)for(var v=1;v<=9&&!h;v++){
+    var rs=[];for(var r=0;r<9;r++)if(c[r][k].has(v))rs.push(r);
+    if(rs.length===1){
+      var r=rs[0];
+      h={r:r,c:k,v:v,rt:'hidden_col',
+        reason:'在第 '+(k+1)+' 列中，数字 '+v+' 的候选位置只剩下 ('+(r+1)+','+(k+1)+') 这一个格子（其他格子已填或已被排除），所以只能填 '+v};
+    }
+  }
+  if(h)return h;
+  
+  // 4. 隐性唯一 - 宫
+  for(var br=0;br<9&&!h;br+=3)for(var bk=0;bk<9&&!h;bk+=3)for(var v=1;v<=9&&!h;v++){
+    var cs=[];for(var r=br;r<br+3;r++)for(var k=bk;k<bk+3;k++)if(c[r][k].has(v))cs.push([r,k]);
+    if(cs.length===1){
+      var r=cs[0][0],k=cs[0][1];
+      h={r:r,c:k,v:v,rt:'hidden_box',
+        reason:'在第 '+bn(r,k)+' 宫中，数字 '+v+' 的候选位置只剩下 ('+(r+1)+','+(k+1)+') 这一个格子（其他格子已填或已被排除），所以只能填 '+v};
+    }
+  }
+  return h;
+}
+
+// 辅助：显示行中已有数字（排除用）
+function getRowNums(r,skipV){
+  var s=[];for(var i=0;i<9;i++)if(b[r][i])s.push(b[r][i]);return s.join('、')||'无'
+}
+function getColNums(c,skipV){
+  var s=[];for(var i=0;i<9;i++)if(b[i][c])s.push(b[i][c]);return s.join('、')||'无'
+}
+function getBoxNums(r,c,skipV){
+  var br=(r/3|0)*3,bc=(c/3|0)*3,s=[];
+  for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++)if(b[i][j])s.push(b[i][j]);
+  return s.join('、')||'无'
+}
+
+function dh(){
+  var h=fh();
+  if(!h){
+    document.getElementById('msg').textContent='✅ 已全部填完，无可推导步骤';
+    document.getElementById('hd').style.display='none';return;
+  }
+  // 填入数字并记录提示
+  b[h.r][h.c]=h.v;n[h.r][h.c].clear();
+  hintSet[h.r+','+h.c]=true;
+  sr=h.r;sc=h.c;
+  dr();
+  
+  // 构建推导过程 - 三行结构
+  var d=document.getElementById('hd');d.style.display='block';
+  var ruleName='';
+  if(h.rt==='naked_single')ruleName='唯一候选数';
+  else if(h.rt==='hidden_row')ruleName='行隐性唯一';
+  else if(h.rt==='hidden_col')ruleName='列隐性唯一';
+  else if(h.rt==='hidden_box')ruleName='宫隐性唯一';
+  
+  // 收集行列宫已有数字
+  var rNums=[],cNums=[],bNums=[];
+  var br=(h.r/3|0)*3,bc=(h.c/3|0)*3;
+  for(var k=0;k<9;k++){
+    if(b[h.r][k]&&k!==h.c)rNums.push(b[h.r][k]);
+    if(b[k][h.c]&&k!==h.r)cNums.push(b[k][h.c]);
+  }
+  for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++){
+    if(b[i][j]&&!(i===h.r&&j===h.c))bNums.push(b[i][j]);
+  }
+  rNums.sort(function(a,b){return a-b});
+  cNums.sort(function(a,b){return a-b});
+  bNums.sort(function(a,b){return a-b});
+  var rStr=rNums.join('、')||'无';
+  var cStr=cNums.join('、')||'无';
+  var bStr=bNums.join('、')||'无';
+  
+  var brief='';
+  if(h.rt==='naked_single') {
+    brief='该格行已有 '+rStr+'，列已有 '+cStr+'，宫已有 '+bStr+'，所以只能填 '+h.v;
+  }
+  if(h.rt==='hidden_row') {
+    brief='第'+(h.r+1)+'行已有 '+rStr+'，其余位置均被排除，'+h.v+'只能放在此处';
+  }
+  if(h.rt==='hidden_col') {
+    brief='第'+(h.c+1)+'列已有 '+cStr+'，其余位置均被排除，'+h.v+'只能放在此处';
+  }
+  if(h.rt==='hidden_box') {
+    brief='第'+(br/3*3+bc/3+1)+'宫已有 '+bStr+'，其余位置均被排除，'+h.v+'只能放在此处';
+  }
+  
+  d.innerHTML=
+    '<b>'+(h.r+1)+'行'+(h.c+1)+'列 填 '+h.v+'</b><br>'+
+    '<span style="color:#888;font-size:12px">规则：'+ruleName+'</span><br>'+
+    '<span style="color:#b0bec5;font-size:12px">'+brief+'</span>';
+  
+  document.getElementById('msg').textContent='💡 格子 ('+(h.r+1)+','+(h.c+1)+') = '+h.v;
+  
+  sr=-1;sc=-1;
+  setTimeout(function(){sr=h.r;sc=h.c;dr();dn()},200);
+  
+  if(fn()){document.getElementById('msg').textContent='🎉 完成！';setTimeout(function(){if(i<99){document.getElementById('msg').textContent='→ 下一关';setTimeout(function(){ld(i+1)},1000)}},800)}
+}
+
+document.getElementById('bP').onclick=function(){if(i>0)ld(i-1);document.getElementById('hd').style.display='none'};
+document.getElementById('bX').onclick=function(){if(i<99)ld(i+1);document.getElementById('hd').style.display='none'};
+document.getElementById('bN').onclick=function(){nm=!nm;document.getElementById('bN').className='bt'+(nm?' on':'')};
+document.getElementById('bR').onclick=function(){ld(i)};
+document.getElementById('bH').onclick=dh;
+document.getElementById('ds').onchange=function(){ld(this.selectedIndex*20);document.getElementById('hd').style.display='none'};
+
+document.addEventListener('keydown',function(e){
+  if(e.key>='1'&&e.key<='9')ip(+e.key);
+  if(e.key==='Backspace'||e.key==='Delete'||e.key==='0')ip(0);
+  if(e.key==='ArrowUp'&&sr>0)sl(sr-1,sc);
+  if(e.key==='ArrowDown'&&sr<8)sl(sr+1,sc);
+  if(e.key==='ArrowLeft'&&sc>0)sl(sr,sc-1);
+  if(e.key==='ArrowRight'&&sc<8)sl(sr,sc+1);
+  if(e.key==='n'||e.key==='N'){nm=!nm;document.getElementById('bN').className='bt'+(nm?' on':'')}
+  if(e.key==='h'||e.key==='H')dh();
+});
+// 启动 - 从上次记忆的关卡开始
+var startLevel=0;
+try{var saved=localStorage.getItem('sudoku_level');if(saved!==null)startLevel=parseInt(saved)||0}catch(e){}
+ld(startLevel);
+</script>
+</body>
+</html>

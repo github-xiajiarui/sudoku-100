@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>数独 · 100关</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;color:#eee;font-family:-apple-system,'Helvetica Neue',sans-serif;display:flex;justify-content:center;min-height:100dvh}
+#app{width:100%;max-width:440px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:4px}
+h1{font-size:18px;padding:6px 0 0;color:#e94560;letter-spacing:1px}
+#bar{width:100%;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#aaa;padding:2px 0}
+#gridWrap{width:100%;aspect-ratio:1;background:#0f3460;border-radius:8px;padding:3px}
+#grid{display:grid;grid-template:repeat(9,1fr)/repeat(9,1fr);gap:1px;width:100%;height:100%;background:#1a1a2e;border:2px solid #e94560;border-radius:4px}
+.cell{background:#16213e;display:flex;align-items:center;justify-content:center;font-size:clamp(20px,6vw,32px);color:#ddd;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;position:relative}
+.cell.given{color:#ff6b6b;font-weight:700}
+.cell.filled{color:#4fc3f7}
+.cell.sel{background:#0d47a1!important}
+.cell.hlrc{background:#0d2137}
+.cell.hlbx{background:#0d2137}
+.cell.hlsm{background:#1a237e}
+.cell.err{background:#3d0000!important;color:#ff5252}
+.nt{position:absolute;inset:1px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center}
+.nt span{font-size:clamp(7px,1.8vw,10px);color:#90caf9;line-height:1}
+#npd{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:4px 0 3px}
+.nb{background:#16213e;border:1px solid #333;border-radius:8px;color:#eee;font-size:clamp(20px,5.5vw,30px);padding:8px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nb:active{background:#0d47a1;transform:scale(0.95)}
+.nb.x{background:#3d0000;color:#ff5252;border-color:#e94560}
+#act{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px}
+.bt{background:#16213e;border:1px solid #555;border-radius:6px;color:#aaa;font-size:clamp(11px,2.8vw,14px);padding:8px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center}
+.bt:active{background:#0d47a1}
+.bt.on{background:#e94560;color:#fff;border-color:#e94560}
+#sel{width:100%;display:flex;gap:6px;margin:2px 0}
+#sel select{flex:1;background:#16213e;color:#eee;border:1px solid #555;border-radius:6px;padding:5px 8px;font-size:13px}
+#msg{min-height:18px;font-size:13px;color:#69f0ae;text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+<h1>🧩 数独 · 100关</h1>
+<div id="bar"><span id="info">第 <b id="lv">1</b>/100 · 初级</span><span id="tm">⏱ 00:00</span></div>
+<div id="gridWrap"><div id="grid"></div></div>
+<div id="npd"></div>
+<div id="act">
+  <button class="bt" id="bP">◀</button>
+  <button class="bt" id="bN">笔记</button>
+  <button class="bt" id="bR">🔄</button>
+  <button class="bt" id="bX">▶</button>
+</div>
+<div id="sel">
+  <select id="diffS"><option>初级 L1-20</option><option>中级 L21-40</option><option>高级 L41-60</option><option>专家 L61-80</option><option>大师 L81-100</option></select>
+</div>
+<div id="msg"></div>
+</div>
+<script>
+// ======== 100关数据 ========
+const L = __LEVELS_DATA__;
+
+// ======== 游戏状态 ========
+let i=0,b=[],g=[],n=[],sr=-1,sc=-1,nm=0,sec=0,ti=0;
+const lv=document.getElementById('lv'),info=document.getElementById('info'),
+  gr=document.getElementById('grid'),np=document.getElementById('npd'),
+  msg=document.getElementById('msg'),tm=document.getElementById('tm');
+
+function ld(x){
+  if(x<0||x>99)return;
+  i=x;const d=L[x];
+  g=d.p.map(r=>[...r]);b=d.p.map(r=>[...r]);
+  n=b.map(r=>r.map(()=>new Set()));
+  sr=sc=-1;nm=0;document.getElementById('bN').classList.remove('on');
+  lv.textContent=x+1;
+  const di=x/20|0;
+  info.innerHTML=`第 <b>${x+1}</b>/100 · ${['初级','中级','高级','专家','大师'][di]}`;
+  dr();dn();st();msg.textContent='';
+}
+
+function dr(){
+  gr.innerHTML='';
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    const e=document.createElement('div');e.className='cell';
+    const v=b[r][c];
+    if(v){e.textContent=v;if(g[r][c])e.classList.add('given');else e.classList.add('filled')}
+    if(!v&&n[r][c].size>0){
+      const nd=document.createElement('div');nd.className='nt';
+      for(let x=1;x<=9;x++){const s=document.createElement('span');s.textContent=n[r][c].has(x)?x:'';nd.appendChild(s)}
+      e.appendChild(nd)
+    }
+    if(sr>=0)
+      if(r===sr&&c===sc)e.classList.add('sel');
+      else if(r===sr||c===sc)e.classList.add('hlrc');
+      else if((r/3|0)===(sr/3|0)&&(c/3|0)===(sc/3|0))e.classList.add('hlbx');
+    const sv=b[sr][sc];
+    if(sr>=0&&sv&&b[r][c]===sv&&!(r===sr&&c===sc))e.classList.add('hlsm');
+    if(v&&!g[r][c]&&!vl(r,c,v))e.classList.add('err');
+    e.onclick=()=>sl(r,c);
+    gr.appendChild(e)
+  }
+}
+
+function dn(){
+  np.innerHTML='';
+  for(let x=1;x<=9;x++){const b=document.createElement('button');b.className='nb';b.textContent=x;b.onclick=()=>ip(x);np.appendChild(b)}
+  const e=document.createElement('button');e.className='nb x';e.textContent='✕';e.onclick=()=>ip(0);np.appendChild(e)
+}
+
+function sl(r,c){sr=r;sc=c;dr();dn()}
+
+function ip(v){
+  if(sr<0)return;const r=sr,c=sc;
+  if(g[r][c])return;
+  if(nm){if(!v)n[r][c].clear();else if(n[r][c].has(v))n[r][c].delete(v);else n[r][c].add(v);b[r][c]=0}
+  else{n[r][c].clear();b[r][c]=v}
+  dr();dn();
+  if(fn()){msg.textContent='🎉 完成！';setTimeout(()=>{if(i<99){msg.textContent='→ 下一关';setTimeout(()=>ld(i+1),1000)}},800)}
+}
+
+function fn(){
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(!b[r][c])return 0;
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(!vl(r,c,b[r][c]))return 0;
+  return 1
+}
+
+function vl(r,c,v){
+  for(let i=0;i<9;i++)if(i!==c&&b[r][i]===v)return 0;
+  for(let i=0;i<9;i++)if(i!==r&&b[i][c]===v)return 0;
+  const br=(r/3|0)*3,bc=(c/3|0)*3;
+  for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(!(i===r&&j===c)&&b[i][j]===v)return 0;
+  return 1
+}
+
+function st(){
+  if(ti)clearInterval(ti);sec=0;tm.textContent='⏱ 00:00';
+  ti=setInterval(()=>{sec++;tm.textContent='⏱ '+(String(sec/60|0).padStart(2,'0'))+':'+(String(sec%60).padStart(2,'0'))},1000)
+}
+
+document.getElementById('bP').onclick=()=>{if(i>0)ld(i-1)};
+document.getElementById('bX').onclick=()=>{if(i<99)ld(i+1)};
+document.getElementById('bN').onclick=()=>{nm=!nm;document.getElementById('bN').classList.toggle('on')};
+document.getElementById('bR').onclick=()=>ld(i);
+document.getElementById('diffS').onchange=function(){ld(this.selectedIndex*20)};
+
+document.addEventListener('keydown',e=>{
+  if(e.key>='1'&&e.key<='9')ip(+e.key);
+  if(e.key==='Backspace'||e.key==='Delete'||e.key==='0')ip(0);
+  if(e.key==='ArrowUp'&&sr>0)sl(sr-1,sc);
+  if(e.key==='ArrowDown'&&sr<8)sl(sr+1,sc);
+  if(e.key==='ArrowLeft'&&sc>0)sl(sr,sc-1);
+  if(e.key==='ArrowRight'&&sc<8)sl(sr,sc+1);
+  if(e.key==='n'||e.key==='N'){nm=!nm;document.getElementById('bN').classList.toggle('on')}
+});
+
+ld(0);
+</script>
+</body>
+</html>

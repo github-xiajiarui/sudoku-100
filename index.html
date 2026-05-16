@@ -133,8 +133,18 @@ function dn(){
         
         // 如果是行列宫的最后一个空，只有正确答案可输入
         if(emptyRow===1||emptyCol===1||emptyBox===1){
-          // 这个位置的正确答案是L[i]的解中的数字
-          var correct=L[i].s[r][c];
+          // 动态计算真正的正确答案（考虑用户已填的错误数字）
+          var correct;
+          if(emptyRow===1){
+            // 行只剩一个空：找1-9中哪个数还没出现
+            for(var n=1;n<=9;n++){var found=false;for(var k=0;k<9;k++)if(b[r][k]===n){found=true;break}if(!found){correct=n;break}}
+          }else if(emptyCol===1){
+            // 列只剩一个空
+            for(var n=1;n<=9;n++){var found=false;for(var k=0;k<9;k++)if(b[k][c]===n){found=true;break}if(!found){correct=n;break}}
+          }else{
+            // 宫只剩一个空
+            for(var n=1;n<=9;n++){var found=false;for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++)if(b[i][j]===n){found=true;i=br+3;break}if(!found){correct=n;break}}
+          }
           if(v!==correct)disabled=true;
         }
       }

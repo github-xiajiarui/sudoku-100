@@ -30,6 +30,8 @@ h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
 #tbl td.bb3{border-bottom:2px solid #f0c0d0}
 /* 通关飞走动画 */
 @keyframes flyUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-200px) scale(0.5)}}
+#tbl td.fu{animation:flyUp 0.6s cubic-bezier(.4,.0,.6,1) both}
+/* 从天而降动画 - 用于初始数字加载 */
 .gv .c{animation:dropIn 0.5s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes dropIn{0%{transform:translateY(-80px);opacity:0}100%{transform:translateY(0);opacity:1}}
 /* 无动画版本 - 切换关卡/选格/填数时用 */
@@ -205,8 +207,8 @@ function GO(){
     var td=tbl.rows[r].cells[c];
     if(b[r][c]){td.style.animation='flyUp 0.6s cubic-bezier(.4,.0,.6,1) both';td.style.animationDelay=(r*9+c)*15+'ms'}
   }
-  // 动画完成后加载下一关
-  setTimeout(function(){ld(i+1)},1200)
+  // 动画完成后加载下一关（80个格子×15ms + 600ms动画 + 300ms缓冲）
+  setTimeout(function(){ld(i+1)},1800)
 }
 
 function vl(r,c,v){

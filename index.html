@@ -16,6 +16,7 @@ h1{font-size:17px;padding:4px 0;color:#e94560}
 #tbl td .c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(18px,5.5vw,30px);color:#ddd}
 #tbl td.gv .c{color:#ff6b6b;font-weight:700}
 #tbl td.fl .c{color:#4fc3f7}
+#tbl td.ht .c{color:#ffa726;font-weight:700}
 #tbl td.sl{background:#0d47a1!important}
 #tbl td.hl{background:#0d2137}
 #tbl td.sm{background:#1a237e}
@@ -24,7 +25,7 @@ h1{font-size:17px;padding:4px 0;color:#e94560}
 #tbl td.br3{border-right:2px solid #e94560}
 #tbl td.bb3{border-bottom:2px solid #e94560}
 .nt{position:absolute;inset:1px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center}
-.nt s{font-size:clamp(7px,1.8vw,10px);color:#90caf9;line-height:1}
+.nt span{font-size:clamp(7px,1.8vw,10px);color:#90caf9;line-height:1;text-decoration:none}
 #npd{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin:4px 0 2px}
 .nb{background:#16213e;border:1px solid #333;border-radius:6px;color:#eee;font-size:clamp(20px,5.5vw,30px);padding:7px 0;cursor:pointer}
 .nb:active{background:#0d47a1;transform:scale(0.95)}
@@ -87,7 +88,7 @@ function dr(){
       if(v){var sp=document.createElement('div');sp.className='c';sp.textContent=v;td.appendChild(sp);if(g[r][c])td.className+=' gv';else td.className+=' fl'}
       if(!v&&n[r][c].size>0){
         var nd=document.createElement('div');nd.className='nt';
-        for(var x=1;x<=9;x++){var s=document.createElement('s');s.textContent=n[r][c].has(x)?x:'';nd.appendChild(s)}
+        for(var x=1;x<=9;x++){var s=document.createElement('span');s.textContent=n[r][c].has(x)?x:'';nd.appendChild(s)}
         var sp=document.createElement('div');sp.className='c';sp.appendChild(nd);td.appendChild(sp)
       }
       if(sr>=0){
@@ -226,8 +227,18 @@ function dh(){
     document.getElementById('msg').textContent='✅ 已全部填完，无可推导步骤';
     document.getElementById('hd').style.display='none';return;
   }
+  // 填入数字前先把当前格子的类清掉ht标记
   b[h.r][h.c]=h.v;n[h.r][h.c].clear();
-  sr=h.r;sc=h.c;dr();
+  sr=h.r;sc=h.c;
+  // 先把当前棋盘状态保存，dr后手动标记ht
+  var hr=h.r, hc=h.c;
+  dr();
+  // 给提示格子加上ht类
+  var cells=document.querySelectorAll('#tbl tr');
+  if(cells[hr]){
+    var td=cells[hr].cells[hc];
+    if(td)td.className+=' ht';
+  }
   
   // 构建详细推导过程
   var d=document.getElementById('hd');d.style.display='block';

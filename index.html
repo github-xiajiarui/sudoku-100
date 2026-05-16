@@ -253,7 +253,47 @@ function fh(){
         reason:'在第 '+bn(r,k)+' 宫中，数字 '+v+' 的候选位置只剩下 ('+(r+1)+','+(k+1)+') 这一个格子（其他格子已填或已被排除），所以只能填 '+v};
     }
   }
+  if(h)return h;
+  
+  // 5. 兜底：回溯求解 — 找一个候选数最少的格子尝试
+  var bestR=-1,bestC=-1,bestSize=10;
+  for(var r=0;r<9;r++)for(var k=0;k<9;k++){
+    if(b[r][k]==0&&c[r][k].size<bestSize&&c[r][k].size>0){bestSize=c[r][k].size;bestR=r;bestC=k}
+  }
+  if(bestR>=0){
+    // 用回溯找到正确答案
+    var solved=solveSudoku();
+    if(solved&&solved[bestR][bestC]){
+      h={r:bestR,c:bestC,v:solved[bestR][bestC],rt:'backtrack',
+        reason:'通过回溯推理，格子 ('+rn(bestR)+','+cn(bestC)+') 应填 '+solved[bestR][bestC]+'（候选数：'+Array.from(c[bestR][bestC]).join('、')+'）'};
+    }
+  }
+  
   return h;
+}
+
+// 回溯求解器：复制当前棋盘，用回溯法求解
+function solveSudoku(){
+  var board=[];
+  for(var r=0;r<9;r++){board[r]=[];for(var c=0;c<9;c++)board[r][c]=b[r][c]}
+  function isValid(br,bc,num){
+    for(var k=0;k<9;k++){if(board[br][k]===num)return false;if(board[k][bc]===num)return false}
+    var sr=(br/3|0)*3,sc=(bc/3|0)*3;
+    for(var i=sr;i<sr+3;i++)for(var j=sc;j<sc+3;j++)if(board[i][j]===num)return false;
+    return true;
+  }
+  function solve(){
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+      if(board[r][c]===0){
+        for(var num=1;num<=9;num++){
+          if(isValid(r,c,num)){board[r][c]=num;if(solve())return true;board[r][c]=0}
+        }
+        return false;
+      }
+    }
+    return true;
+  }
+  return solve()?board:null;
 }
 
 // 辅助：显示行中已有数字（排除用）
@@ -288,6 +328,7 @@ function dh(){
   else if(h.rt==='hidden_row')ruleName='行隐性唯一';
   else if(h.rt==='hidden_col')ruleName='列隐性唯一';
   else if(h.rt==='hidden_box')ruleName='宫隐性唯一';
+  else if(h.rt==='backtrack')ruleName='回溯推导';
   
   // 收集行列宫已有数字
   var rNums=[],cNums=[],bNums=[];
@@ -320,6 +361,9 @@ function dh(){
     brief='第'+(br/3*3+bc/3+1)+'宫已有 '+bStr+'，其余位置均被排除，'+h.v+'只能放在此处';
   }
   
+  if(h.rt==='backtrack') {
+    brief='通过回溯算法验证，只有 '+h.v+' 是可行的（候选数：'+Array.from(gc()[h.r][h.c]).join('、')+'）';
+  }
   d.innerHTML=
     '<b>'+(h.r+1)+'行'+(h.c+1)+'列 填 '+h.v+'</b><br>'+
     '<span style="color:#888;font-size:12px">规则：'+ruleName+'</span><br>'+

@@ -21,8 +21,9 @@ h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.55}}
 #tbl td.hl{background:#fdf0f4}
 #tbl td.sm{background:#fce4ec}
-#tbl td.er{background:#fff0f0!important}
-#tbl td.er .c{color:#e06060}
+#tbl td.er{background:#fff0f5!important;animation:errPulse 0.8s ease-in-out infinite}
+@keyframes errPulse{0%,100%{background:#fff0f5}50%{background:#ffe0e8}}
+#tbl td.er .c{color:#d63060;font-weight:700;font-size:clamp(20px,6vw,32px)}
 #tbl td.br3{border-right:2px solid #f0c0d0}
 #tbl td.bb3{border-bottom:2px solid #f0c0d0}
 .nt{position:absolute;inset:1px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center}

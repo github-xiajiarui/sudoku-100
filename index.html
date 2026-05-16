@@ -75,6 +75,8 @@ function ld(x){
   document.getElementById('lv').textContent=x+1;
   document.getElementById('dn').textContent=['初级','中级','高级','专家','大师'][x/20|0];
   dr();dn();st();document.getElementById('msg').textContent='';document.getElementById('hd').style.display='none';hintSet={};
+  // 保存当前关卡
+  try{localStorage.setItem('sudoku_level',x)}catch(e){}
 }
 
 function dr(){
@@ -308,7 +310,10 @@ document.addEventListener('keydown',function(e){
   if(e.key==='n'||e.key==='N'){nm=!nm;document.getElementById('bN').className='bt'+(nm?' on':'')}
   if(e.key==='h'||e.key==='H')dh();
 });
-ld(0);
+// 启动 - 从上次记忆的关卡开始
+var startLevel=0;
+try{var saved=localStorage.getItem('sudoku_level');if(saved!==null)startLevel=parseInt(saved)||0}catch(e){}
+ld(startLevel);
 </script>
 </body>
 </html>

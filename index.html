@@ -247,24 +247,35 @@ function dh(){
   else if(h.rt==='hidden_col')ruleName='列隐性唯一';
   else if(h.rt==='hidden_box')ruleName='宫隐性唯一';
   
-  // 提取关键推理信息
-  var brief = h.reason;
-  // naked_single: "格子 (3,7) 的候选数中，只有 5 是可能的..."
-  if(h.rt==='naked_single') {
-    brief = '该格子所在行、列、宫已有数字排除了其他可能';
+  // 收集行列宫已有数字
+  var rNums=[],cNums=[],bNums=[];
+  var br=(h.r/3|0)*3,bc=(h.c/3|0)*3;
+  for(var k=0;k<9;k++){
+    if(b[h.r][k]&&k!==h.c)rNums.push(b[h.r][k]);
+    if(b[k][h.c]&&k!==h.r)cNums.push(b[k][h.c]);
   }
-  // hidden_xxx: "在第 3 行中，数字 5 的候选位置只剩下 (3,7) 这一个格子"
+  for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++){
+    if(b[i][j]&&!(i===h.r&&j===h.c))bNums.push(b[i][j]);
+  }
+  rNums.sort(function(a,b){return a-b});
+  cNums.sort(function(a,b){return a-b});
+  bNums.sort(function(a,b){return a-b});
+  var rStr=rNums.join('、')||'无';
+  var cStr=cNums.join('、')||'无';
+  var bStr=bNums.join('、')||'无';
+  
+  var brief='';
+  if(h.rt==='naked_single') {
+    brief='该格行已有 '+rStr+'，列已有 '+cStr+'，宫已有 '+bStr+'，所以只能填 '+h.v;
+  }
   if(h.rt==='hidden_row') {
-    var parts = h.reason.match(/\d+/g);
-    if(parts) brief = '第'+parts[0]+'行其他9个位置已被排除，'+h.v+'只能在此';
+    brief='第'+(h.r+1)+'行已有 '+rStr+'，其余位置均被排除，'+h.v+'只能放在此处';
   }
   if(h.rt==='hidden_col') {
-    var parts = h.reason.match(/\d+/g);
-    if(parts) brief = '第'+parts[0]+'列其他9个位置已被排除，'+h.v+'只能在此';
+    brief='第'+(h.c+1)+'列已有 '+cStr+'，其余位置均被排除，'+h.v+'只能放在此处';
   }
   if(h.rt==='hidden_box') {
-    var parts = h.reason.match(/\d+/g);
-    if(parts) brief = '第'+parts[0]+'宫其他8个位置已被排除，'+h.v+'只能在此';
+    brief='第'+(br/3*3+bc/3+1)+'宫已有 '+bStr+'，其余位置均被排除，'+h.v+'只能放在此处';
   }
   
   d.innerHTML=

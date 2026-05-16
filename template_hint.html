@@ -337,8 +337,8 @@ function dh(){
     if(b[h.r][k]&&k!==h.c)rNums.push(b[h.r][k]);
     if(b[k][h.c]&&k!==h.r)cNums.push(b[k][h.c]);
   }
-  for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++){
-    if(b[i][j]&&!(i===h.r&&j===h.c))bNums.push(b[i][j]);
+  for(var di=br;di<br+3;di++)for(var dj=bc;dj<bc+3;dj++){
+    if(b[di][dj]&&!(di===h.r&&dj===h.c))bNums.push(b[di][dj]);
   }
   rNums.sort(function(a,b){return a-b});
   cNums.sort(function(a,b){return a-b});

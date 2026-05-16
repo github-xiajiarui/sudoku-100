@@ -24,6 +24,9 @@ h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
 #tbl td.er .c{color:#cc3355;font-weight:700;font-size:clamp(22px,7vw,36px)}
 #tbl td.br3{border-right:2px solid #f0c0d0}
 #tbl td.bb3{border-bottom:2px solid #f0c0d0}
+/* 宫内虚线格 */
+#tbl td.dr{border-right:1px dashed #e8d0dc}
+#tbl td.db{border-bottom:1px dashed #e8d0dc}
 /* 从天而降动画 - 仅初次加载时触发 */
 .gv .c{animation:dropIn 0.5s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes dropIn{0%{transform:translateY(-80px);opacity:0}100%{transform:translateY(0);opacity:1}}
@@ -91,8 +94,11 @@ function dr(anim){
     for(var c=0;c<9;c++){
       var td=document.createElement('td');
       var v=b[r][c];
+      // 宫边界: 实线, 宫内: 虚线
       if(c%3==2&&c<8)td.className='br3';
+      else if(c%3!=0)td.className='dr';
       if(r%3==2&&r<8)td.className+=' bb3';
+      else if(r%3!=0)td.className+=' db';
       if(v){var sp=document.createElement('div');sp.className='c';sp.textContent=v;td.appendChild(sp);if(g[r][c]){td.className+=' gv';sp.style.animationDelay=(r*9+c)*20+'ms'}else td.className+=' fl'}
       // 提示标记（橙色）- 所有历史提示格子都保持橙色
       var hintKey=r+','+c;

@@ -19,7 +19,7 @@ h1{font-size:17px;padding:4px 0;color:#e94560}
 #tbl td.ht .c{color:#ffa726;font-weight:700}
 #tbl td.sl{background:#0d47a1!important;animation:pulse 1s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-#tbl td.hl{background:#0d2137}
+#tbl td.hl{background:#1a2a4a}
 #tbl td.sm{background:#1a237e}
 #tbl td.er{background:#3d0000!important}
 #tbl td.er .c{color:#ff5252}
@@ -98,7 +98,6 @@ function dr(){
       if(sr>=0){
         if(r===sr&&c===sc)td.className+=' sl';
         else if(r===sr||c===sc)td.className+=' hl';
-        else if((r/3|0)===(sr/3|0)&&(c/3|0)===(sc/3|0))td.className+=' hl';
         var sv=b[sr][sc];
         if(sv&&b[r][c]===sv&&!(r===sr&&c===sc))td.className+=' sm'
       }

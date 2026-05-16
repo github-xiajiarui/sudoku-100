@@ -202,13 +202,13 @@ function ip(v){
 function GO(){
   document.getElementById('msg').textContent='';
   var tbl=document.getElementById('tbl');
-  // 给所有非空格子添加飞走动画
+  // 给所有非空格子添加飞走动画class（一齐飞走，无延迟）
   for(var r=0;r<9;r++)for(var c=0;c<9;c++){
     var td=tbl.rows[r].cells[c];
-    if(b[r][c]){td.style.animation='flyUp 0.6s cubic-bezier(.4,.0,.6,1) both';td.style.animationDelay=(r*9+c)*15+'ms'}
+    if(b[r][c])td.className+=' fu'
   }
-  // 动画完成后加载下一关（80个格子×15ms + 600ms动画 + 300ms缓冲）
-  setTimeout(function(){ld(i+1)},1800)
+  // 动画完成后加载下一关
+  setTimeout(function(){ld(i+1)},1000)
 }
 
 function vl(r,c,v){

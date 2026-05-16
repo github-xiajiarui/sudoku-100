@@ -30,7 +30,7 @@ h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
 #tbl td.bb3{border-bottom:2px solid #f0c0d0}
 /* 通关弹一跳飞走动画 */
 @keyframes bounceFly{0%{opacity:1}20%{transform:translateY(-20px)}40%{transform:translateY(0)}60%{transform:translateY(-10px)}100%{transform:translateY(-350px);opacity:0}}
-#tbl td.fu{animation:bounceFly 0.7s cubic-bezier(.4,.0,.6,1) both}
+#tbl td.fu .c{animation:bounceFly 0.7s cubic-bezier(.4,.0,.6,1) both!important}
 /* 从天而降动画 - 用于初始数字加载 */
 .gv .c{animation:dropIn 0.5s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes dropIn{0%{transform:translateY(-80px);opacity:0}100%{transform:translateY(0);opacity:1}}
@@ -58,7 +58,7 @@ h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
 <body>
 <div id="app">
 <h1>🧩 数独 · 100关</h1>
-<div id="bar"><span>第 <b id="lv">1</b>/100 · <span id="dn">初级</span></span><span><span id="ver" style="font-size:11px;color:#c8a0b8;margin-right:6px">v1.7</span><span id="tm">⏱ 00:00</span></span></div>
+<div id="bar"><span>第 <b id="lv">1</b>/100 · <span id="dn">初级</span></span><span><span id="ver" style="font-size:11px;color:#c8a0b8;margin-right:6px">v1.8</span><span id="tm">⏱ 00:00</span></span></div>
 <table id="tbl"></table>
 <div id="msg"></div>
 <div id="npd"></div>

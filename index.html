@@ -1,248 +1,156 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>数独 · 100关</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#1a1a2e;color:#eee;font-family:-apple-system,'Helvetica Neue',sans-serif;display:flex;justify-content:center;min-height:100dvh}
-#app{width:100%;max-width:440px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px}
-h1{font-size:20px;padding:6px 0 0;color:#e94560;letter-spacing:1px;display:flex;align-items:center;gap:8px}
-#difficultyWrap{display:flex;align-items:center;gap:6px}
-#difficultySelect{background:#16213e;color:#eee;border:1px solid #555;border-radius:6px;padding:4px 8px;font-size:13px}
-#statusBar{width:100%;display:flex;justify-content:space-between;align-items:center;padding:2px 4px;font-size:13px;color:#aaa}
-#timer{font-size:13px;color:#888}
-#gridWrap{width:100%;aspect-ratio:1;background:#0f3460;border-radius:8px;padding:4px}
-#grid{display:grid;grid-template:repeat(9,1fr)/repeat(9,1fr);gap:1px;width:100%;height:100%;background:#1a1a2e;border:2px solid #e94560;border-radius:4px}
-.cell{background:#16213e;display:flex;align-items:center;justify-content:center;font-size:clamp(18px,5.5vw,30px);color:#ddd;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;position:relative}
-.cell.given{color:#ff6b6b;font-weight:700}
-.cell.filled{color:#4fc3f7}
-.cell.selected{background:#0d47a1!important}
-.cell.hlRowCol{background:#0d2137}
-.cell.hlBox{background:#0d2137}
-.cell.hlSame{background:#1a237e}
-.cell.err{background:#3d0000!important;color:#ff5252}
-.notes{position:absolute;inset:2px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center}
-.notes span{font-size:clamp(8px,2vw,11px);color:#90caf9;line-height:1}
-#numpad{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:4px 0}
-.nbtn{background:#16213e;border:1px solid #333;border-radius:8px;color:#eee;font-size:clamp(18px,5vw,28px);padding:10px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.nbtn:active{background:#0d47a1;transform:scale(0.95)}
-.nbtn.erase{background:#3d0000;color:#ff5252;border-color:#e94560}
-#actions{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
-.act{background:#16213e;border:1px solid #333;border-radius:6px;color:#aaa;font-size:clamp(11px,2.8vw,14px);padding:9px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center}
-.act:active{background:#0d47a1}
-.act.on{background:#e94560;color:#fff;border-color:#e94560}
-#msg{min-height:20px;font-size:14px;color:#69f0ae;text-align:center;padding:2px}
-</style>
-</head>
-<body>
-<div id="app">
-<h1>🧩 数独 · 100关 <span style="font-size:14px;color:#888;font-weight:400" id="lv">1/100</span></h1>
-<div id="statusBar">
-  <span id="diff">初级</span>
-  <span id="timer">⏱ 00:00</span>
-</div>
-<div id="gridWrap"><div id="grid"></div></div>
-<div id="numpad"></div>
-<div id="actions">
-  <button class="act" id="aPrev">◀ 上一关</button>
-  <button class="act" id="aNote">✏️ 笔记</button>
-  <button class="act" id="aNext">下一关 ▶</button>
-</div>
-<div id="difficultyWrap">
-  <select id="difficultySelect"><option>初级 L1-20</option><option>中级 L21-40</option><option>高级 L41-60</option><option>专家 L61-80</option><option>大师 L81-100</option></select>
-  <button class="act" id="aReset" style="min-width:60px;flex:0">🔄 重置</button>
-</div>
-<div id="msg"></div>
-</div>
-<script>
-// ========== 数独生成器 ==========
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*i|0;[a[i],a[j]]=[a[j],a[i]]}return a}
-
-function solve(board){
-  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
-    if(board[r][c]===0){
-      const nums=shuffle([1,2,3,4,5,6,7,8,9]);
-      for(const n of nums){
-        if(valid(board,r,c,n)){board[r][c]=n;if(solve(board))return true;board[r][c]=0}
-      }
-      return false
-    }
-  }
-  return true
-}
-
-function valid(b,r,c,n){
-  for(let i=0;i<9;i++)if(b[r][i]===n||b[i][c]===n)return false;
-  const br=(r/3|0)*3,bc=(c/3|0)*3;
-  for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(b[i][j]===n)return false;
-  return true
-}
-
-function countSolutions(b,limit=2){
-  let cnt=0;
-  function dfs(){
-    for(let r=0;r<9;r++)for(let c=0;c<9;c++){
-      if(b[r][c]===0){
-        for(let n=1;n<=9;n++){
-          if(valid(b,r,c,n)){b[r][c]=n;dfs();b[r][c]=0;if(cnt>=limit)return}
-        }
-        return
-      }
-    }
-    cnt++
-  }
-  dfs();
-  return cnt
-}
-
-function generatePuzzle(clues){
-  // 先生成完整解
-  let sol=Array.from({length:9},()=>Array(9).fill(0));
-  solve(sol);
-  // 拷贝一份作为挖空用
-  let puzzle=sol.map(r=>[...r]);
-  // 所有位置
-  let cells=[];
-  for(let r=0;r<9;r++)for(let c=0;c<9;c++)cells.push([r,c]);
-  shuffle(cells);
-  let removed=0;
-  const target=81-clues;
-  for(const [r,c] of cells){
-    if(removed>=target)break;
-    const backup=puzzle[r][c];
-    puzzle[r][c]=0;
-    // 检查唯一解
-    const test=puzzle.map(rr=>[...rr]);
-    if(countSolutions(test,2)===1){
-      removed++;
-    }else{
-      puzzle[r][c]=backup;
-    }
-  }
-  return {puzzle,solution:sol}
-}
-
-// ========== 生成100关 ==========
-const DIFF=[{name:'初级',clues:25},{name:'中级',clues:23},{name:'高级',clues:21},{name:'专家',clues:20},{name:'大师',clues:18}];
-const ALL=[];
-for(let d=0;d<5;d++){
-  const {clues}=DIFF[d];
-  for(let i=0;i<20;i++){
-    const {puzzle,solution}=generatePuzzle(clues);
-    ALL.push({p:puzzle,s:solution});
-    // 每10关更新一下进度
-    if((i+1)%5===0)console.log(`生成第${d*20+i+1}关...`);
-  }
-}
-
-// ========== 游戏状态 ==========
-let idx=0,bd=[],gv=[],nts=[],sr=-1,sc=-1,nm=false,sec=0,ti=null;
-const lv=document.getElementById('lv'),diffEl=document.getElementById('diff'),
-  grid=document.getElementById('grid'),np=document.getElementById('numpad'),
-  msg=document.getElementById('msg'),tmr=document.getElementById('timer');
-
-function load(n){
-  if(n<0||n>=ALL.length)return;
-  idx=n;
-  const data=ALL[n];
-  gv=data.p.map(r=>[...r]);
-  bd=data.p.map(r=>[...r]);
-  nts=bd.map(r=>r.map(()=>new Set()));
-  sr=sc=-1;nm=false;
-  document.getElementById('aNote').classList.remove('on');
-  lv.textContent=`${n+1}/100`;
-  const d=Math.floor(n/20);
-  diffEl.textContent=DIFF[d].name;
-  render();renderNumpad();
-  startTimer();msg.textContent='';
-}
-
-function render(){
-  grid.innerHTML='';
-  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
-    const el=document.createElement('div');el.className='cell';
-    const v=bd[r][c];
-    if(v){el.textContent=v;if(gv[r][c])el.classList.add('given');else el.classList.add('filled')}
-    if(!v&&nts[r][c].size>0){
-      const nd=document.createElement('div');nd.className='notes';
-      for(let n=1;n<=9;n++){const s=document.createElement('span');s.textContent=nts[r][c].has(n)?n:'';nd.appendChild(s)}
-      el.appendChild(nd)
-    }
-    if(sr>=0&&sc>=0){
-      if(r===sr&&c===sc)el.classList.add('selected');
-      else if(r===sr||c===sc)el.classList.add('hlRowCol');
-      else if((r/3|0)===(sr/3|0)&&(c/3|0)===(sc/3|0))el.classList.add('hlBox');
-      const sv=bd[sr][sc];
-      if(sv&&bd[r][c]===sv&&!(r===sr&&c===sc))el.classList.add('hlSame')
-    }
-    if(v&&!gv[r][c]&&!valid(bd,r,c,v))el.classList.add('err');
-    el.onclick=()=>sel(r,c);
-    grid.appendChild(el)
-  }
-}
-
-function renderNumpad(){
-  np.innerHTML='';
-  for(let n=1;n<=9;n++){
-    const b=document.createElement('button');b.className='nbtn';b.textContent=n;
-    b.onclick=()=>inp(n);np.appendChild(b)
-  }
-  const e=document.createElement('button');e.className='nbtn erase';e.textContent='✕';
-  e.onclick=()=>inp(0);np.appendChild(e)
-}
-
-function sel(r,c){sr=r;sc=c;render();renderNumpad()}
-
-function inp(n){
-  if(sr<0||sc<0)return;
-  const r=sr,c=sc;
-  if(gv[r][c])return;
-  if(nm){
-    if(!n)nts[r][c].clear();else if(nts[r][c].has(n))nts[r][c].delete(n);else nts[r][c].add(n);
-    bd[r][c]=0
-  }else{nts[r][c].clear();bd[r][c]=n}
-  render();renderNumpad();
-  if(done()){msg.textContent='🎉 完成！';setTimeout(()=>{if(idx<99){msg.textContent='进入下一关...';setTimeout(()=>load(idx+1),1200)}},[1000])}
-}
-
-function done(){
-  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(!bd[r][c])return false;
-  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(!valid(bd,r,c,bd[r][c]))return false;
-  return true
-}
-
-function valid(b,r,c,n){
-  for(let i=0;i<9;i++)if(i!==c&&b[r][i]===n)return false;
-  for(let i=0;i<9;i++)if(i!==r&&b[i][c]===n)return false;
-  const br=(r/3|0)*3,bc=(c/3|0)*3;
-  for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(!(i===r&&j===c)&&b[i][j]===n)return false;
-  return true
-}
-
-function startTimer(){
-  if(ti)clearInterval(ti);sec=0;tmr.textContent='⏱ 00:00';
-  ti=setInterval(()=>{sec++;tmr.textContent=`⏱ ${String(sec/60|0).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`},1000)
-}
-
-document.getElementById('aPrev').onclick=()=>{if(idx>0)load(idx-1)};
-document.getElementById('aNext').onclick=()=>{if(idx<99)load(idx+1)};
-document.getElementById('aNote').onclick=()=>{nm=!nm;document.getElementById('aNote').classList.toggle('on')};
-document.getElementById('aReset').onclick=()=>{load(idx)};
-document.getElementById('difficultySelect').onchange=function(){load(this.selectedIndex*20)};
-
-document.addEventListener('keydown',e=>{
-  if(e.key>='1'&&e.key<='9')inp(+e.key);
-  if(e.key==='Backspace'||e.key==='Delete'||e.key==='0')inp(0);
-  if(e.key==='ArrowUp'&&sr>0)sel(sr-1,sc);
-  if(e.key==='ArrowDown'&&sr<8)sel(sr+1,sc);
-  if(e.key==='ArrowLeft'&&sc>0)sel(sr,sc-1);
-  if(e.key==='ArrowRight'&&sc<8)sel(sr,sc+1);
-  if(e.key==='n'||e.key==='N'){nm=!nm;document.getElementById('aNote').classList.toggle('on')}
-});
-
-load(0);
-</script>
-</body>
-</html>
+     1|<!DOCTYPE html>
+     2|<html>
+     3|<head>
+     4|<meta charset="UTF-8">
+     5|<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+     6|<title>数独 · 100关</title>
+     7|<style>
+     8|*{margin:0;padding:0;box-sizing:border-box}
+     9|body{background:#1a1a2e;color:#eee;font-family:-apple-system,'Helvetica Neue',sans-serif;display:flex;justify-content:center;min-height:100dvh}
+    10|#app{width:100%;max-width:440px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:4px}
+    11|h1{font-size:18px;padding:6px 0 0;color:#e94560;letter-spacing:1px}
+    12|#bar{width:100%;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#aaa;padding:2px 0}
+    13|#gridWrap{width:100%;aspect-ratio:1;background:#0f3460;border-radius:8px;padding:3px}
+    14|#grid{display:grid;grid-template:repeat(9,1fr)/repeat(9,1fr);gap:1px;width:100%;height:100%;background:#1a1a2e;border:2px solid #e94560;border-radius:4px}
+    15|.cell{background:#16213e;display:flex;align-items:center;justify-content:center;font-size:clamp(20px,6vw,32px);color:#ddd;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;position:relative}
+    16|.cell.given{color:#ff6b6b;font-weight:700}
+    17|.cell.filled{color:#4fc3f7}
+    18|.cell.sel{background:#0d47a1!important}
+    19|.cell.hlrc{background:#0d2137}
+    20|.cell.hlbx{background:#0d2137}
+    21|.cell.hlsm{background:#1a237e}
+    22|.cell.err{background:#3d0000!important;color:#ff5252}
+    23|.nt{position:absolute;inset:1px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center}
+    24|.nt span{font-size:clamp(7px,1.8vw,10px);color:#90caf9;line-height:1}
+    25|#npd{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:4px 0 3px}
+    26|.nb{background:#16213e;border:1px solid #333;border-radius:8px;color:#eee;font-size:clamp(20px,5.5vw,30px);padding:8px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    27|.nb:active{background:#0d47a1;transform:scale(0.95)}
+    28|.nb.x{background:#3d0000;color:#ff5252;border-color:#e94560}
+    29|#act{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px}
+    30|.bt{background:#16213e;border:1px solid #555;border-radius:6px;color:#aaa;font-size:clamp(11px,2.8vw,14px);padding:8px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center}
+    31|.bt:active{background:#0d47a1}
+    32|.bt.on{background:#e94560;color:#fff;border-color:#e94560}
+    33|#sel{width:100%;display:flex;gap:6px;margin:2px 0}
+    34|#sel select{flex:1;background:#16213e;color:#eee;border:1px solid #555;border-radius:6px;padding:5px 8px;font-size:13px}
+    35|#msg{min-height:18px;font-size:13px;color:#69f0ae;text-align:center}
+    36|</style>
+    37|</head>
+    38|<body>
+    39|<div id="app">
+    40|<h1>🧩 数独 · 100关</h1>
+    41|<div id="bar"><span id="info">第 <b id="lv">1</b>/100 · 初级</span><span id="tm">⏱ 00:00</span></div>
+    42|<div id="gridWrap"><div id="grid"></div></div>
+    43|<div id="npd"></div>
+    44|<div id="act">
+    45|  <button class="bt" id="bP">◀</button>
+    46|  <button class="bt" id="bN">笔记</button>
+    47|  <button class="bt" id="bR">🔄</button>
+    48|  <button class="bt" id="bX">▶</button>
+    49|</div>
+    50|<div id="sel">
+    51|  <select id="diffS"><option>初级 L1-20</option><option>中级 L21-40</option><option>高级 L41-60</option><option>专家 L61-80</option><option>大师 L81-100</option></select>
+    52|</div>
+    53|<div id="msg"></div>
+    54|</div>
+    55|<script>
+    56|// ======== 100关数据 ========
+    57|const L = File unchanged since last read. The content from the earlier read_file result in this conversation is still current — refer to that instead of re-reading.;
+    58|
+    59|// ======== 游戏状态 ========
+    60|let i=0,b=[],g=[],n=[],sr=-1,sc=-1,nm=0,sec=0,ti=0;
+    61|const lv=document.getElementById('lv'),info=document.getElementById('info'),
+    62|  gr=document.getElementById('grid'),np=document.getElementById('npd'),
+    63|  msg=document.getElementById('msg'),tm=document.getElementById('tm');
+    64|
+    65|function ld(x){
+    66|  if(x<0||x>99)return;
+    67|  i=x;const d=L[x];
+    68|  g=d.p.map(r=>[...r]);b=d.p.map(r=>[...r]);
+    69|  n=b.map(r=>r.map(()=>new Set()));
+    70|  sr=sc=-1;nm=0;document.getElementById('bN').classList.remove('on');
+    71|  lv.textContent=x+1;
+    72|  const di=x/20|0;
+    73|  info.innerHTML=`第 <b>${x+1}</b>/100 · ${['初级','中级','高级','专家','大师'][di]}`;
+    74|  dr();dn();st();msg.textContent='';
+    75|}
+    76|
+    77|function dr(){
+    78|  gr.innerHTML='';
+    79|  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    80|    const e=document.createElement('div');e.className='cell';
+    81|    const v=b[r][c];
+    82|    if(v){e.textContent=v;if(g[r][c])e.classList.add('given');else e.classList.add('filled')}
+    83|    if(!v&&n[r][c].size>0){
+    84|      const nd=document.createElement('div');nd.className='nt';
+    85|      for(let x=1;x<=9;x++){const s=document.createElement('span');s.textContent=n[r][c].has(x)?x:'';nd.appendChild(s)}
+    86|      e.appendChild(nd)
+    87|    }
+    88|    if(sr>=0)
+    89|      if(r===sr&&c===sc)e.classList.add('sel');
+    90|      else if(r===sr||c===sc)e.classList.add('hlrc');
+    91|      else if((r/3|0)===(sr/3|0)&&(c/3|0)===(sc/3|0))e.classList.add('hlbx');
+    92|    const sv=b[sr][sc];
+    93|    if(sr>=0&&sv&&b[r][c]===sv&&!(r===sr&&c===sc))e.classList.add('hlsm');
+    94|    if(v&&!g[r][c]&&!vl(r,c,v))e.classList.add('err');
+    95|    e.onclick=()=>sl(r,c);
+    96|    gr.appendChild(e)
+    97|  }
+    98|}
+    99|
+   100|function dn(){
+   101|  np.innerHTML='';
+   102|  for(let x=1;x<=9;x++){const b=document.createElement('button');b.className='nb';b.textContent=x;b.onclick=()=>ip(x);np.appendChild(b)}
+   103|  const e=document.createElement('button');e.className='nb x';e.textContent='✕';e.onclick=()=>ip(0);np.appendChild(e)
+   104|}
+   105|
+   106|function sl(r,c){sr=r;sc=c;dr();dn()}
+   107|
+   108|function ip(v){
+   109|  if(sr<0)return;const r=sr,c=sc;
+   110|  if(g[r][c])return;
+   111|  if(nm){if(!v)n[r][c].clear();else if(n[r][c].has(v))n[r][c].delete(v);else n[r][c].add(v);b[r][c]=0}
+   112|  else{n[r][c].clear();b[r][c]=v}
+   113|  dr();dn();
+   114|  if(fn()){msg.textContent='🎉 完成！';setTimeout(()=>{if(i<99){msg.textContent='→ 下一关';setTimeout(()=>ld(i+1),1000)}},800)}
+   115|}
+   116|
+   117|function fn(){
+   118|  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(!b[r][c])return 0;
+   119|  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(!vl(r,c,b[r][c]))return 0;
+   120|  return 1
+   121|}
+   122|
+   123|function vl(r,c,v){
+   124|  for(let i=0;i<9;i++)if(i!==c&&b[r][i]===v)return 0;
+   125|  for(let i=0;i<9;i++)if(i!==r&&b[i][c]===v)return 0;
+   126|  const br=(r/3|0)*3,bc=(c/3|0)*3;
+   127|  for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(!(i===r&&j===c)&&b[i][j]===v)return 0;
+   128|  return 1
+   129|}
+   130|
+   131|function st(){
+   132|  if(ti)clearInterval(ti);sec=0;tm.textContent='⏱ 00:00';
+   133|  ti=setInterval(()=>{sec++;tm.textContent='⏱ '+(String(sec/60|0).padStart(2,'0'))+':'+(String(sec%60).padStart(2,'0'))},1000)
+   134|}
+   135|
+   136|document.getElementById('bP').onclick=()=>{if(i>0)ld(i-1)};
+   137|document.getElementById('bX').onclick=()=>{if(i<99)ld(i+1)};
+   138|document.getElementById('bN').onclick=()=>{nm=!nm;document.getElementById('bN').classList.toggle('on')};
+   139|document.getElementById('bR').onclick=()=>ld(i);
+   140|document.getElementById('diffS').onchange=function(){ld(this.selectedIndex*20)};
+   141|
+   142|document.addEventListener('keydown',e=>{
+   143|  if(e.key>='1'&&e.key<='9')ip(+e.key);
+   144|  if(e.key==='Backspace'||e.key==='Delete'||e.key==='0')ip(0);
+   145|  if(e.key==='ArrowUp'&&sr>0)sl(sr-1,sc);
+   146|  if(e.key==='ArrowDown'&&sr<8)sl(sr+1,sc);
+   147|  if(e.key==='ArrowLeft'&&sc>0)sl(sr,sc-1);
+   148|  if(e.key==='ArrowRight'&&sc<8)sl(sr,sc+1);
+   149|  if(e.key==='n'||e.key==='N'){nm=!nm;document.getElementById('bN').classList.toggle('on')}
+   150|});
+   151|
+   152|ld(0);
+   153|</script>
+   154|</body>
+   155|</html>
+   156|

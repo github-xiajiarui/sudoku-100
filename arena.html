@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>数独 · 积分版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fef6f9;color:#5a4a5a;font-family:-apple-system,sans-serif;display:flex;justify-content:center;min-height:100dvh}
+#app{width:100%;max-width:440px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;min-height:100dvh}
+h1{font-size:18px;padding:6px 0;color:#e87a9d;letter-spacing:1px}
+#bar{width:100%;display:flex;justify-content:space-between;padding:4px 2px;font-size:13px;color:#b08ba8}
+#tbl{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;border:2px solid #f0c0d0;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(200,140,170,0.15)}
+#tbl td{width:11.111%;height:0;padding:0;text-align:center;vertical-align:middle;background:#fff8fa;cursor:pointer;position:relative;user-select:none}
+#tbl td:after{content:'';display:block;padding-bottom:100%}
+#tbl td .c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(18px,5.5vw,30px);color:#5a4a5a}
+#tbl td.gv .c{color:#d4728a;font-weight:700}
+#tbl td.fl .c{color:#7fb3d3}
+#tbl td.ht .c{color:#e8a040;font-weight:700}
+#tbl td.sl{background:#fce4ec!important;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.55}}
+#tbl td.hl{background:#fdf0f4}
+#tbl td.sm{background:#fce4ec}
+#tbl td.er .c{color:#cc3355;font-weight:700;font-size:clamp(22px,7vw,36px)}
+#tbl td.dr{border-right:1px dashed #d4b8c8}
+#tbl td.db{border-bottom:1px dashed #d4b8c8}
+#tbl td.br3{border-right:2px solid #f0c0d0}
+#tbl td.bb3{border-bottom:2px solid #f0c0d0}
+@keyframes bounceFly{0%{opacity:1}20%{transform:translateY(-20px)}40%{transform:translateY(0)}60%{transform:translateY(-10px)}100%{transform:translateY(-350px);opacity:0}}
+#tbl td.fu .c{animation:bounceFly .7s cubic-bezier(.4,.0,.6,1) both!important}
+.gv .c{animation:dropIn .5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes dropIn{0%{transform:translateY(-80px);opacity:0}100%{transform:translateY(0);opacity:1}}
+.noanim .gv .c{animation:none!important}
+.nt{position:absolute;inset:1px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center}
+.nt span{font-size:clamp(7px,1.8vw,10px);color:#b8a0b0;line-height:1;text-decoration:none}
+#npd{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0 4px}
+.nb{background:#fff;border:1.5px solid #f0d0dd;border-radius:10px;color:#5a4a5a;font-size:clamp(20px,5.5vw,30px);padding:8px 0;cursor:pointer;box-shadow:0 1px 4px rgba(200,140,170,0.1)}
+.nb:active{background:#fce4ec;transform:scale(.95)}
+.nb.x{background:#ffe8ee;color:#e87a9d;border-color:#f0b0c8}
+.nb.ds{background:#e8f0f8;color:#6a8aaa;border-color:#b0c8e0;font-size:clamp(12px,3vw,14px);padding:6px 0}
+#act{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.bt{background:#fff;border:1.5px solid #f0d0dd;border-radius:8px;color:#b08ba8;font-size:clamp(12px,3vw,14px);padding:8px 0;cursor:pointer;text-align:center;box-shadow:0 1px 4px rgba(200,140,170,0.08)}
+.bt:active{background:#fce4ec}
+.bt.on{background:#e87a9d;color:#fff;border-color:#e87a9d;box-shadow:0 2px 8px rgba(232,122,157,0.3)}
+#msg{min-height:24px;font-size:13px;color:#7fb3d3;text-align:center;padding:4px;line-height:1.4}
+#hd{display:none;width:100%;background:#fff8fa;border:1.5px solid #f0c0d0;border-radius:10px;padding:10px 12px;margin:6px 0;font-size:13px;color:#7a6a7a;line-height:1.6;text-align:left;box-shadow:0 1px 6px rgba(200,140,170,0.1)}
+#hd b{color:#e87a9d}
+
+/* 难度选择面板 */
+#selPanel{display:flex;flex-direction:column;align-items:center;width:100%;padding:20px 0;flex:1;justify-content:center}
+#selPanel h2{font-size:20px;color:#e87a9d;margin-bottom:16px}
+.diffBtn{width:100%;background:#fff;border:2px solid #f0d0dd;border-radius:12px;padding:14px 16px;margin:5px 0;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:#5a4a5a;box-shadow:0 2px 8px rgba(200,140,170,0.1)}
+.diffBtn:active{background:#fce4ec;transform:scale(.98)}
+.diffBtn .dn{font-weight:700}
+.diffBtn .sc{color:#e87a9d;font-weight:700;font-size:18px}
+.diffBtn .empty{color:#b0b0b0;font-size:13px}
+
+#gameArea{display:none;width:100%;flex-direction:column;align-items:center}
+#topBar{width:100%;display:flex;justify-content:space-between;align-items:center;padding:4px 2px;font-size:13px;color:#b08ba8}
+#topBar .left{display:flex;align-items:center;gap:6px}
+#scMsg{font-size:12px;color:#e87a9d;min-height:18px;padding:2px 0}
+#tm{color:#b08ba8}
+</style></head><body>
+<div id="app">
+<h1>🧩 数独 · 积分版</h1>
+<div id="selPanel">
+  <h2>选择难度开始游戏</h2>
+  <div id="diffList"></div>
+</div>
+<div id="gameArea">
+  <div id="topBar">
+    <span class="left"><span id="dn">初级</span> · <span id="scMsg"></span></span>
+    <span><button class="bt" id="bM" style="padding:4px 8px;font-size:11px">⬅ 难度</button> <span id="tm">⏱ 00:00</span></span>
+  </div>
+  <table id="tbl"></table>
+  <div id="msg"></div>
+  <div id="npd"></div>
+  <div id="act">
+    <button class="bt" id="bR">🔄 重置</button>
+    <button class="bt" id="bH">💡 提示</button>
+    <button class="bt" id="bN">✏️ 笔记</button>
+  </div>
+  <div id="hd"></div>
+</div>
+</div>
+<script>
+// ===== 难度定义 =====
+var D=[
+  {n:'初级',e:20},
+  {n:'中级',e:30},
+  {n:'高级',e:40},
+  {n:'专家',e:50},
+  {n:'大师',e:55}
+];
+var curDiff=-1,b=[],g=[],n=[],sol=[],sr=-1,sc=-1,nm=false,se=0,ti=0,hintSet={},hintCnt=0,emptyCells=0;
+var SKEY='sudokuArena_scores';
+
+function loadScores(){
+  try{var s=localStorage.getItem(SKEY);return s?JSON.parse(s):[0,0,0,0,0]}catch(e){return [0,0,0,0,0]}
+}
+function saveScores(s){
+  try{localStorage.setItem(SKEY,JSON.stringify(s))}catch(e){}
+}
+
+// ===== 谜题生成器 =====
+function genSolved(){
+  var b=[[],[],[],[],[],[],[],[],[]];
+  for(var r=0;r<9;r++)for(var c=0;c<9;c++)b[r][c]=0;
+  // Fill diagonals
+  for(var k=0;k<3;k++){
+    var nums=[1,2,3,4,5,6,7,8,9];
+    for(var i=0;i<9;i++){var j=i+Math.random()*(9-i)|0;var t=nums[i];nums[i]=nums[j];nums[j]=t}
+    for(var i=0;i<3;i++)for(var j=0;j<3;j++)b[k*3+i][k*3+j]=nums[i*3+j];
+  }
+  // Backtrack solve
+  function iv(r,c,v){
+    for(var i=0;i<9;i++){if(b[r][i]==v||b[i][c]==v)return 0}
+    var br=(r/3|0)*3,bc=(c/3|0)*3;
+    for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++)if(b[i][j]==v)return 0;
+    return 1
+  }
+  function sl(){
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+      if(b[r][c]==0){
+        var nums=[1,2,3,4,5,6,7,8,9];
+        for(var i=0;i<9;i++){var j=i+Math.random()*(9-i)|0;var t=nums[i];nums[i]=nums[j];nums[j]=t}
+        for(var v=0;v<9;v++){if(iv(r,c,nums[v])){b[r][c]=nums[v];if(sl())return 1;b[r][c]=0}}
+        return 0
+      }
+    }
+    return 1
+  }
+  sl()
+  return b
+}
+
+function cs(p,limit){
+  var g=[],c=[0];
+  for(var r=0;r<9;r++){g[r]=[];for(var k=0;k<9;k++)g[r][k]=p[r][k]}
+  function iv(r,c,v){
+    for(var i=0;i<9;i++){if(g[r][i]==v||g[i][c]==v)return 0}
+    var br=(r/3|0)*3,bc=(c/3|0)*3;
+    for(var i=br;i<br+3;i++)for(var j=bc;j<bc+3;j++)if(g[i][j]==v)return 0;
+    return 1
+  }
+  function bt(){
+    if(c[0]>=limit)return
+    for(var r=0;r<9;r++)for(var k=0;k<9;k++){
+      if(g[r][k]==0){
+        for(var v=1;v<=9;v++){
+          if(iv(r,k,v)){g[r][k]=v;bt();g[r][k]=0;if(c[0]>=limit)return}
+        }
+        return
+      }
+    }
+    c[0]++
+  }
+  bt()
+  return c[0]
+}
+
+function genPuzzle(empty){
+  for(var att=0;att<30;att++){
+    var sol=genSolved();
+    var p=[];
+    for(var r=0;r<9;r++){p[r]=[];for(var c=0;c<9;c++)p[r][c]=sol[r][c]}
+    var pos=[];
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++)pos.push([r,c]);
+    for(var i=0;i<pos.length;i++){var j=i+Math.random()*(pos.length-i)|0;var t=pos[i];pos[i]=pos[j];pos[j]=t}
+    var rem=0,tp=[];
+    for(var r=0;r<9;r++){tp[r]=[];for(var c=0;c<9;c++)tp[r][c]=sol[r][c]}
+    for(var k=0;k<pos.length;k++){
+      if(rem>=empty)break;
+      var r=pos[k][0],c=pos[k][1],bk=tp[r][c];
+      tp[r][c]=0;
+      if(cs(tp,2)==1){rem++}else tp[r][c]=bk
+    }
+    if(rem>=empty-2){return {p:tp,s:sol}}
+  }
+  return {p:tp,s:sol}
+}
+
+// ===== 游戏核心 =====
+function initGame(diffIdx){
+  curDiff=diffIdx;hintCnt=0;hintSet={};sr=-1;sc=-1;nm=false;
+  var dd=D[diffIdx];
+  emptyCells=dd.e;
+  var res=genPuzzle(dd.e);
+  g=res.p;sol=res.s;
+  b=[];n=[];
+  for(var r=0;r<9;r++){
+    b[r]=[];n[r]=[];
+    for(var c=0;c<9;c++){b[r][c]=g[r][c];n[r][c]=new Set()}
+  }
+  document.getElementById('dn').textContent=dd.n;
+  document.getElementById('scMsg').textContent='积分：0';
+  document.getElementById('selPanel').style.display='none';
+  document.getElementById('gameArea').style.display='flex';
+  dr(1);dn();st();
+  document.getElementById('msg').textContent='';
+  document.getElementById('hd').style.display='none';
+}
+
+function dr(anim){
+  var tbl=document.getElementById('tbl');tbl.innerHTML='';
+  if(anim)tbl.className='';else tbl.className='noanim';
+  for(var r=0;r<9;r++){
+    var tr=document.createElement('tr');
+    for(var c=0;c<9;c++){
+      var td=document.createElement('td');
+      var v=b[r][c];
+      td.className='';
+      if(c%3!=2&&c<8)td.className+=' dr';
+      if(r%3!=2&&r<8)td.className+=' db';
+      if(c%3==2&&c<8)td.className+=' br3';
+      if(r%3==2&&r<8)td.className+=' bb3';
+      if(v){
+        var sp=document.createElement('div');sp.className='c';sp.textContent=v;td.appendChild(sp);
+        if(g[r][c]){td.className+=' gv';sp.style.animationDelay=(r*9+c)*20+'ms'}else td.className+=' fl'
+      }
+      var hk=r+','+c;
+      if(hintSet[hk]&&!g[r][c])td.className+=' ht';
+      if(!v&&n[r][c].size>0){
+        var nd=document.createElement('div');nd.className='nt';
+        for(var x=1;x<=9;x++){var s=document.createElement('span');s.textContent=n[r][c].has(x)?x:'';nd.appendChild(s)}
+        var sp=document.createElement('div');sp.className='c';sp.appendChild(nd);td.appendChild(sp)
+      }
+      if(sr>=0){
+        if(r===sr&&c===sc)td.className+=' sl';
+        else if(r===sr||c===sc)td.className+=' hl';
+        var sv=b[sr][sc];
+        if(sv&&b[r][c]===sv&&!(r===sr&&c===sc))td.className+=' sm'
+      }
+      td.onclick=function(rr,cc){return function(){sl(rr,cc)}}(r,c);
+      tr.appendChild(td)
+    }
+    tbl.appendChild(tr)
+  }
+}
+
+function sl(r,c){
+  if(document.querySelector('#tbl td.fu'))return;
+  sr=r;sc=c;dr();dn()
+}
+
+function ip(v){
+  if(sr<0)return;var r=sr,c=sc;
+  if(g[r][c])return;
+  var hk=r+','+c;
+  if(hintSet[hk])delete hintSet[hk];
+  if(nm){
+    if(!v)n[r][c].clear();
+    else if(n[r][c].has(v))n[r][c].delete(v);else n[r][c].add(v);
+    b[r][c]=0
+  }else{n[r][c].clear();b[r][c]=v}
+  dr();dn();document.getElementById('hd').style.display='none';
+  if(fn()){win()}
+}
+
+function dn(){
+  var npd=document.getElementById('npd');npd.innerHTML='';
+  if(sr<0)return;
+  var r=sr,c=sc;
+  if(g[r][c])return;
+  // Count numbers placed
+  var cnt={};for(var i=1;i<=9;i++)cnt[i]=0;
+  for(var rr=0;rr<9;rr++)for(var cc=0;cc<9;cc++)if(b[rr][cc]&&!g[rr][cc])cnt[b[rr][cc]]++;
+  for(var v=1;v<=9;v++){
+    var btn=document.createElement('button');btn.className='nb';
+    if(cnt[v]>=9){btn.style.opacity='0.3';btn.style.pointerEvents='none'}
+    btn.textContent=v;
+    btn.onclick=function(vv){return function(){ip(vv)}}(v);
+    npd.appendChild(btn)
+  }
+  var e=document.createElement('button');e.className='nb x';e.textContent='✕';
+  e.onclick=function(){ip(0)};npd.appendChild(e)
+}
+
+function vl(r,c,v){
+  for(var k=0;k<9;k++){if(k!==c&&b[r][k]===v)return 0;if(k!==r&&b[k][c]===v)return 0}
+  var br=(r/3|0)*3,bc=(c/3|0)*3;
+  for(var k=br;k<br+3;k++)for(var l=bc;l<bc+3;l++)if(!(k===r&&l===c)&&b[k][l]===v)return 0;
+  return 1
+}
+
+function fn(){
+  for(var r=0;r<9;r++)for(var c=0;c<9;c++)if(!b[r][c])return 0;
+  for(var r=0;r<9;r++)for(var c=0;c<9;c++)if(!vl(r,c,b[r][c]))return 0;
+  return 1
+}
+
+function st(){
+  if(ti)clearInterval(ti);se=0;
+  document.getElementById('tm').textContent='⏱ 00:00';
+  ti=setInterval(function(){se++;var m=se/60|0,s=se%60;document.getElementById('tm').textContent='⏱ '+(m<10?'0':'')+m+':'+(s<10?'0':'')+s},1000)
+}
+
+// ===== 通关 & 积分 =====
+function win(){
+  document.getElementById('msg').textContent='🎉 完成！';
+  var score=Math.max(0,emptyCells-hintCnt);
+  var sc=loadScores();sc[curDiff]+=score;saveScores(sc);
+  document.getElementById('scMsg').textContent='积分 +'+score+'（累计'+sc[curDiff]+'分）';
+  setTimeout(function(){
+    document.getElementById('msg').textContent='';
+    var t=document.getElementById('tbl');
+    for(var a=0;a<9;a++)for(var y=0;y<9;y++)t.rows[a].cells[y].className+=' fu';
+  },300);
+  if(ti)clearInterval(ti)
+}
+
+// ===== 提示 =====
+function rn(r){return r+1}
+function cn(c){return c+1}
+function bn(r,c){return (r/3|0)*3+(c/3|0)+1}
+
+function gc(){
+  var c=Array.from({length:9},function(){return Array.from({length:9},function(){return new Set()})});
+  for(var r=0;r<9;r++)for(var k=0;k<9;k++){
+    if(b[r][k])continue;
+    var s=new Set([1,2,3,4,5,6,7,8,9]);
+    for(var i=0;i<9;i++){if(b[r][i])s.delete(b[r][i]);if(b[i][k])s.delete(b[i][k])}
+    var br=(r/3|0)*3,bk=(k/3|0)*3;
+    for(var i=br;i<br+3;i++)for(var j=bk;j<bk+3;j++)if(b[i][j])s.delete(b[i][j]);
+    c[r][k]=s
+  }
+  return c
+}
+
+function fh(){
+  var c=gc(),h=null;
+  for(var r=0;r<9&&!h;r++)for(var k=0;k<9&&!h;k++){
+    if(b[r][k]==0&&c[r][k].size===1){
+      var v=Array.from(c[r][k])[0];
+      h={r:r,c:k,v:v};
+    }
+  }
+  if(h)return h;
+  for(var r=0;r<9&&!h;r++)for(var v=1;v<=9&&!h;v++){
+    var ks=[];for(var k=0;k<9;k++)if(c[r][k].has(v))ks.push(k);
+    if(ks.length===1){h={r:r,c:ks[0],v:v}}
+  }
+  if(h)return h;
+  for(var k=0;k<9&&!h;k++)for(var v=1;v<=9&&!h;v++){
+    var rs=[];for(var r=0;r<9;r++)if(c[r][k].has(v))rs.push(r);
+    if(rs.length===1){h={r:rs[0],c:k,v:v}}
+  }
+  if(h)return h;
+  for(var br=0;br<9&&!h;br+=3)for(var bk=0;bk<9&&!h;bk+=3)for(var v=1;v<=9&&!h;v++){
+    var cs=[];for(var r=br;r<br+3;r++)for(var k=bk;k<bk+3;k++)if(c[r][k].has(v))cs.push([r,k]);
+    if(cs.length===1){var r=cs[0][0],k=cs[0][1];h={r:r,c:k,v:v}}
+  }
+  if(h)return h;
+  // Backtracking fallback
+  var br=-1,bc=-1,bs=10;
+  for(var r=0;r<9;r++)for(var k=0;k<9;k++){
+    if(b[r][k]==0&&c[r][k].size>0&&c[r][k].size<bs){br=r;bc=k;bs=c[r][k].size}
+  }
+  if(br>=0){
+    var cans=Array.from(c[br][bc]);
+    for(var t=0;t<cans.length;t++){
+      var tv=cans[t],sb=[];for(var i=0;i<9;i++){sb[i]=[];for(var j=0;j<9;j++)sb[i][j]=b[i][j]}
+      b[br][bc]=tv;
+      if(sb2()){b=sb;h={r:br,c:bc,v:tv};return h}
+      b=sb;
+    }
+  }
+  return h
+}
+
+function sb2(){
+  var g=[];for(var i=0;i<9;i++){g[i]=[];for(var j=0;j<9;j++)g[i][j]=b[i][j]}
+  function bt(){
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+      if(g[r][c]==0){
+        for(var v=1;v<=9;v++){
+          var ok=1;
+          for(var i=0;i<9&&ok;i++){if(g[r][i]==v||g[i][c]==v)ok=0}
+          if(ok){var br=(r/3|0)*3,bc=(c/3|0)*3;for(var i=br;i<br+3&&ok;i++)for(var j=bc;j<bc+3;j++)if(g[i][j]==v)ok=0}
+          if(ok){g[r][c]=v;if(bt())return 1;g[r][c]=0}
+        }
+        return 0
+      }
+    }
+    return 1
+  }
+  return bt()
+}
+
+function dh(){
+  var h=fh();
+  if(!h){
+    document.getElementById('msg').textContent='✅ 已全部填完，无可推导步骤';
+    document.getElementById('hd').style.display='none';return;
+  }
+  b[h.r][h.c]=h.v;n[h.r][h.c].clear();
+  hintSet[h.r+','+h.c]=true;
+  hintCnt++;
+  document.getElementById('scMsg').textContent='积分：'+Math.max(0,emptyCells-hintCnt);
+  sr=h.r;sc=h.c;dr();dn();
+  document.getElementById('hd').style.display='none';
+  document.getElementById('msg').textContent='💡 ('+(h.r+1)+','+(h.c+1)+') = '+h.v;
+  sr=-1;sc=-1;
+  setTimeout(function(){sr=h.r;sc=h.c;dr();dn();
+    if(fn()){
+      document.getElementById('msg').textContent='🎉 完成！';
+      var score=Math.max(0,emptyCells-hintCnt);
+      var sc=loadScores();sc[curDiff]+=score;saveScores(sc);
+      document.getElementById('scMsg').textContent='积分 +'+score+'（累计'+sc[curDiff]+'分）';
+      setTimeout(function(){
+        document.getElementById('msg').textContent='';
+        var t=document.getElementById('tbl');
+        for(var a=0;a<9;a++)for(var y=0;y<9;y++)t.rows[a].cells[y].className+=' fu';
+      },300);
+      if(ti)clearInterval(ti)
+    }
+  },200)
+}
+
+// ===== 难度面板 =====
+function showPanel(){
+  document.getElementById('selPanel').style.display='flex';
+  document.getElementById('gameArea').style.display='none';
+  if(ti)clearInterval(ti);
+  var sc=loadScores();
+  var dl=document.getElementById('diffList');dl.innerHTML='';
+  for(var i=0;i<D.length;i++){
+    var btn=document.createElement('div');btn.className='diffBtn';
+    var nm=document.createElement('span');nm.className='dn';nm.textContent=D[i].n;
+    var sv=document.createElement('span');sv.className='sc';sv.textContent=sc[i]>0?sc[i]+'分':'';
+    var em=document.createElement('span');em.className='empty';em.textContent='('+D[i].e+'空)';
+    if(sc[i]==0)sv.textContent='0分';
+    var left=document.createElement('span');left.appendChild(nm);left.appendChild(em);
+    btn.appendChild(left);btn.appendChild(sv);
+    btn.onclick=function(ii){return function(){initGame(ii)}}(i);
+    dl.appendChild(btn)
+  }
+}
+
+// ===== 初始化 =====
+document.addEventListener('keydown',function(e){
+  if(e.key>='1'&&e.key<='9')ip(+e.key);
+  if(e.key==='Backspace'||e.key==='Delete'||e.key==='0')ip(0);
+  if(e.key==='ArrowUp'&&sr>0)sl(sr-1,sc);
+  if(e.key==='ArrowDown'&&sr<8)sl(sr+1,sc);
+  if(e.key==='ArrowLeft'&&sc>0)sl(sr,sc-1);
+  if(e.key==='ArrowRight'&&sc<8)sl(sr,sc+1);
+  if(e.key==='n'||e.key==='N'){nm=!nm;document.getElementById('bN').className='bt'+(nm?' on':'')}
+  if(e.key==='h'||e.key==='H')dh()
+});
+
+document.getElementById('bR').onclick=function(){if(curDiff>=0)initGame(curDiff)};
+document.getElementById('bH').onclick=dh;
+document.getElementById('bN').onclick=function(){nm=!nm;document.getElementById('bN').className='bt'+(nm?' on':'')};
+document.getElementById('bM').onclick=showPanel;
+
+showPanel();
+</script>
+</body></html>
